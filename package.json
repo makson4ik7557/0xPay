@@ -1,0 +1,32 @@
+{
+  "name": "0xpay",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch app.ts",
+    "start": "tsx app.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/makson4ik7557/0xPay.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/makson4ik7557/0xPay/issues"
+  },
+  "homepage": "https://github.com/makson4ik7557/0xPay#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.3",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
