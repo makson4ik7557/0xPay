@@ -1,0 +1,11 @@
+###
+POST http://localhost:3000/wallets
+Content-Type: application/json
+
+{
+  "ownerId": 1,
+  "currency": "BTC",
+  "network": "BITCOIN"
+}
+###
+

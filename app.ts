@@ -18,33 +18,27 @@ const currencyDecimals = {
 const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat())];
 const createWallet = z.object({
     ownerId: z.number(),
-    currency: z.enum(Object.keys(assetNetworks)),
+    currency: z.enum(Object.keys(assetNetworks) as Currency[]),
     network: z.enum(uniqueNetworks),
 }).strict();
-
-function validateCreate(req:Request,res:Response,next:NextFunction){
-    const result = createWallet.safeParse(req.body);
-    if(!result.success){
-        return res.status(400).json({error: result.error});
-    } else {
-        next();
-    }
-}
 
 app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
 });
 
-app.post('/wallets', validateCreate, (req:Request, res:Response) => {
-    const {ownerId , currency , network} = req.body;
+app.post('/wallets', (req:Request, res:Response) => {
+    const result = createWallet.safeParse(req.body);
+    if(!result.success){
+        return res.status(400).json({error: result.error});
+    }
     const newWallet: Wallet = {
         id: basicId++,
-        ownerId: ownerId,
+        ownerId: result.data.ownerId,
         address: "PLACEHOLDER_ADDRESS",
         balance: 0n,
-        currency: currency,
-        decimals: currencyDecimals[currency as Currency],
-        network: network
+        currency: result.data.currency,
+        decimals: currencyDecimals[result.data.currency],
+        network: result.data.network
     }
     wallets.push(newWallet);
     res.status(201).json({massage:"Wallet successfully created"})
