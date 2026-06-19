@@ -20,7 +20,9 @@ const createWallet = z.object({
     ownerId: z.number(),
     currency: z.enum(Object.keys(assetNetworks) as Currency[]),
     network: z.enum(uniqueNetworks),
-}).strict();
+}).strict().refine((data) => {
+     return (assetNetworks[data.currency] as readonly string[]).includes(data.network);
+}, {message: "Enter correct chain for such currency"});
 
 app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
@@ -41,7 +43,7 @@ app.post('/wallets', (req:Request, res:Response) => {
         network: result.data.network
     }
     wallets.push(newWallet);
-    res.status(201).json({massage:"Wallet successfully created"})
+    res.status(201).json({message:"Wallet successfully created"})
 })
 
 app.listen(port, () => {
