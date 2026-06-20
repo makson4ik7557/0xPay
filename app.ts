@@ -1,8 +1,12 @@
-import express , {type NextFunction}from "express";
+import express from "express";
 import type {Response,Request} from "express";
-import type {Currency, Networks, Wallet} from "./wallets.js";
+import type {Currency, Wallet} from "./wallets.js";
 import {assetNetworks} from "./wallets.js"
 import {z} from "zod"
+
+(BigInt.prototype as any).toJSON = function (){
+    return this.toString();
+}
 
 const app = express();
 app.use(express.json());
@@ -44,6 +48,16 @@ app.post('/wallets', (req:Request, res:Response) => {
     }
     wallets.push(newWallet);
     res.status(201).json({message:"Wallet successfully created"})
+})
+
+app.get('/wallets/:id' , (req:Request,res:Response) => {
+    const wallet = wallets.find(w => w.id === Number(req.params.id));
+    if(!wallet) return res.status(404).json({message: "Wallet with such id not found"})
+    res.json(wallet);
+})
+
+app.get('/wallets' , (req:Request,res:Response) => {
+    res.json(wallets);
 })
 
 app.listen(port, () => {
