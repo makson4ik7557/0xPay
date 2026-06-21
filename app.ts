@@ -1,18 +1,25 @@
 import express from "express";
+import argon2 from "argon2"
 import type {Response,Request} from "express";
-import type {Currency, Wallet} from "./wallets.js";
-import {assetNetworks} from "./wallets.js"
+import type {Currency, Wallet} from "./wallet.js";
+import type {User} from "./user.js";
+import {assetNetworks} from "./wallet.js"
 import {z} from "zod"
+
+
+const app = express();
+app.use(express.json());
+let port = 3000;
+let basicIdOfWallets = 0;
+let basicIdOfUsers = 0;
 
 (BigInt.prototype as any).toJSON = function (){
     return this.toString();
 }
 
-const app = express();
-app.use(express.json());
-let port = 3000;
-let basicId = 0;
 const wallets: Wallet[] = [];
+const users: User[] = [];
+
 const currencyDecimals = {
     BTC: 8,
     ETH: 18,
@@ -28,17 +35,24 @@ const createWallet = z.object({
      return (assetNetworks[data.currency] as readonly string[]).includes(data.network);
 }, {message: "Enter correct chain for such currency"});
 
+const userRegistration = z.object({
+    email: z.email(),
+    password: z.string().min(8),
+    confirmPassword: z.string()
+}).strict().refine((data) => data.password === data.confirmPassword, {
+    error: "Passwords don't match",
+    path: ["confirmPassword"],
+});
+
 app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
 });
 
 app.post('/wallets', (req:Request, res:Response) => {
     const result = createWallet.safeParse(req.body);
-    if(!result.success){
-        return res.status(400).json({error: result.error});
-    }
+    if(!result.success) return res.status(400).json({error: result.error});
     const newWallet: Wallet = {
-        id: basicId++,
+        id: basicIdOfWallets++,
         ownerId: result.data.ownerId,
         address: "PLACEHOLDER_ADDRESS",
         balance: 0n,
@@ -58,6 +72,22 @@ app.get('/wallets/:id' , (req:Request,res:Response) => {
 
 app.get('/wallets' , (req:Request,res:Response) => {
     res.json(wallets);
+})
+
+app.post('/auth/register', async (req:Request,res:Response) => {
+    const result = userRegistration.safeParse(req.body);
+    if(!result.success) return res.status(400).json({error: result.error});
+    const emailValidation = users.some(u => u.email === result.data.email);
+    if(emailValidation) return res.status(409).json({error: "This email is already taken."});
+    const hashedPassword = await argon2.hash(result.data.password);
+    const newUser: User = {
+        id: basicIdOfUsers++,
+        email: result.data.email,
+        passwordHash: hashedPassword,
+        createdAt: Date.now(),
+    }
+    users.push(newUser);
+    res.status(201).json({message:"User successfully created"})
 })
 
 app.listen(port, () => {

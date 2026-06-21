@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/makson4ik7557/0xPay#readme",
   "dependencies": {
+    "argon2": "^0.44.0",
     "express": "^5.2.1",
     "zod": "^4.4.3"
   },

@@ -14,3 +14,14 @@ GET http://localhost:3000/wallets
 Content-Type: application/json
 
 ###
+
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser@gmail.com",
+  "password": "TestPassword123.",
+  "confirmPassword": "TestPassword123."
+}
+###
