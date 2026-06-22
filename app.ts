@@ -1,5 +1,6 @@
 import express from "express";
-import argon2 from "argon2"
+import argon2 from "argon2";
+import jwt from "jsonwebtoken";
 import type {Response,Request} from "express";
 import type {Currency, Wallet} from "./wallet.js";
 import type {User} from "./user.js";
@@ -11,7 +12,7 @@ const app = express();
 app.use(express.json());
 let port = 3000;
 let basicIdOfWallets = 0;
-let basicIdOfUsers = 0;
+let basicIdOfUsers = 1;
 const loginError = "Incorrect personal data: check password or email";
 
 (BigInt.prototype as any).toJSON = function (){
@@ -96,6 +97,8 @@ app.post('/auth/register', async (req:Request,res:Response) => {
     res.status(201).json({message:"User successfully created"})
 })
 
+const secretKey = "SECRET_KEY";
+
 app.post('/auth/login', async (req:Request,res:Response) => {
     const result = userLogin.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
@@ -104,7 +107,10 @@ app.post('/auth/login', async (req:Request,res:Response) => {
     try {
         const isMatch = await argon2.verify(emailValidatedUser.passwordHash, result.data.password);
         if (isMatch) {
-            return res.status(200).json({message: "Login successful"})
+            const token = jwt.sign({ id: emailValidatedUser.id}, secretKey, {
+                expiresIn: '1 hour',
+            });
+        return res.json({ token: token });
         } else {
             return res.status(401).json({error: loginError});
         }

@@ -20,8 +20,10 @@
   },
   "homepage": "https://github.com/makson4ik7557/0xPay#readme",
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "argon2": "^0.44.0",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
