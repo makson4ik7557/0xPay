@@ -12,6 +12,7 @@ app.use(express.json());
 let port = 3000;
 let basicIdOfWallets = 0;
 let basicIdOfUsers = 0;
+const loginError = "Incorrect personal data: check password or email";
 
 (BigInt.prototype as any).toJSON = function (){
     return this.toString();
@@ -42,6 +43,11 @@ const userRegistration = z.object({
 }).strict().refine((data) => data.password === data.confirmPassword, {
     error: "Passwords don't match",
     path: ["confirmPassword"],
+});
+
+const userLogin = z.object({
+    email: z.email(),
+    password: z.string().min(8),
 });
 
 app.get('/health', (req:Request,res:Response) => {
@@ -89,6 +95,24 @@ app.post('/auth/register', async (req:Request,res:Response) => {
     users.push(newUser);
     res.status(201).json({message:"User successfully created"})
 })
+
+app.post('/auth/login', async (req:Request,res:Response) => {
+    const result = userLogin.safeParse(req.body);
+    if(!result.success) return res.status(400).json({error: result.error});
+    const emailValidatedUser = users.find(u => u.email === result.data.email);
+    if(!emailValidatedUser) return res.status(401).json({error: loginError});
+    try {
+        const isMatch = await argon2.verify(emailValidatedUser.passwordHash, result.data.password);
+        if (isMatch) {
+            return res.status(200).json({message: "Login successful"})
+        } else {
+            return res.status(401).json({error: loginError});
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({error: 'Internal server error'});
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/health`);

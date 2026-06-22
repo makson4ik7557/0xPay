@@ -25,3 +25,13 @@ Content-Type: application/json
   "confirmPassword": "TestPassword123."
 }
 ###
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@gmail.com",
+  "password": "TestPassword123."
+}
+###
