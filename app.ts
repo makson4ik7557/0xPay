@@ -1,7 +1,8 @@
 import express from "express";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
-import type {Response,Request} from "express";
+import 'dotenv/config';
+import type {Response,Request,NextFunction} from "express";
 import type {Currency, Wallet} from "./wallet.js";
 import type {User} from "./user.js";
 import {assetNetworks} from "./wallet.js"
@@ -14,9 +15,26 @@ let port = 3000;
 let basicIdOfWallets = 0;
 let basicIdOfUsers = 1;
 const loginError = "Incorrect personal data: check password or email";
+const secretKey = process.env.SECRET_KEY;
+if(!secretKey) throw new Error("SECRET_KEY is not set");
 
 (BigInt.prototype as any).toJSON = function (){
     return this.toString();
+}
+
+const validateUserLogin = function(req:Request, res:Response, next: NextFunction){
+    const authHeader = req.headers.authorization;
+    if(!authHeader) return res.status(401).json({error: "Unauthorized"});
+    const arrayOfTokens = authHeader.split(" ");
+    const token = arrayOfTokens[1];
+    if(!token) return res.status(401).json({error: "Unauthorized"});
+    try {
+        const payload=  jwt.verify(token, secretKey);
+        next();
+    } catch (err) {
+        console.error(err);
+        return res.status(401).json({error: "Unauthorized"});
+    }
 }
 
 const wallets: Wallet[] = [];
@@ -97,8 +115,6 @@ app.post('/auth/register', async (req:Request,res:Response) => {
     res.status(201).json({message:"User successfully created"})
 })
 
-const secretKey = "SECRET_KEY";
-
 app.post('/auth/login', async (req:Request,res:Response) => {
     const result = userLogin.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
@@ -107,7 +123,7 @@ app.post('/auth/login', async (req:Request,res:Response) => {
     try {
         const isMatch = await argon2.verify(emailValidatedUser.passwordHash, result.data.password);
         if (isMatch) {
-            const token = jwt.sign({ id: emailValidatedUser.id}, secretKey, {
+            const token = jwt.sign({ id: emailValidatedUser.id}, secretKey , {
                 expiresIn: '1 hour',
             });
         return res.json({ token: token });
@@ -118,6 +134,10 @@ app.post('/auth/login', async (req:Request,res:Response) => {
         console.error(err);
         return res.status(500).json({error: 'Internal server error'});
     }
+});
+
+app.get('/auth/me', validateUserLogin ,(req:Request,res:Response) => {
+    res.json({status: "ok:true"})
 });
 
 app.listen(port, () => {
