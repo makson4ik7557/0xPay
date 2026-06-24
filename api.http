@@ -1,26 +1,26 @@
-###
-POST http://localhost:3000/wallets
-Content-Type: application/json
-
-{
-  "ownerId": 1,
-  "currency": "BTC",
-  "network": "BITCOIN"
-}
-###
-
-###
-GET http://localhost:3000/wallets
-Content-Type: application/json
-
-###
+####
+#POST http://localhost:3000/wallets
+#Content-Type: application/json
+#
+#{
+#  "ownerId": 1,
+#  "currency": "BTC",
+#  "network": "BITCOIN"
+#}
+####
+#
+####
+#GET http://localhost:3000/wallets
+#Content-Type: application/json
+#
+####
 
 ###
 POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser212@gmail.com",
   "password": "TestPassword123.",
   "confirmPassword": "TestPassword123."
 }
@@ -31,13 +31,12 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser212@gmail.com",
   "password": "TestPassword123."
 }
 ###
 
 ###
 GET http://localhost:3000/auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMjQxNTk5LCJleHAiOjE3ODIyNDUxOTl9.ekpIqL45PpAuToIcenf_DkvudXNyAbQ9OPhvETwi83s
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMjkyODA0LCJleHAiOjE3ODIyOTY0MDR9.dwWY1sO7Q2s8hc29UE829bzK-3CiGma9KBYftydwK5c
 ###

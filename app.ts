@@ -30,6 +30,8 @@ const validateUserLogin = function(req:Request, res:Response, next: NextFunction
     if(!token) return res.status(401).json({error: "Unauthorized"});
     try {
         const payload=  jwt.verify(token, secretKey);
+        if(typeof payload !== "object") return res.status(401).json({error: "Unauthorized"});
+        req.userId = payload.id;
         next();
     } catch (err) {
         console.error(err);
@@ -137,7 +139,13 @@ app.post('/auth/login', async (req:Request,res:Response) => {
 });
 
 app.get('/auth/me', validateUserLogin ,(req:Request,res:Response) => {
-    res.json({status: "ok:true"})
+    const user = users.find(u => u.id === req.userId);
+    if(!user) return res.status(404).json({error: "User not found"});
+    res.json({
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+    });
 });
 
 app.listen(port, () => {
