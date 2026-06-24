@@ -12,7 +12,7 @@ import {z} from "zod"
 const app = express();
 app.use(express.json());
 let port = 3000;
-let basicIdOfWallets = 0;
+let basicIdOfWallets = 1;
 let basicIdOfUsers = 1;
 const loginError = "Incorrect personal data: check password or email";
 const secretKey = process.env.SECRET_KEY;
@@ -50,7 +50,6 @@ const currencyDecimals = {
 
 const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat())];
 const createWallet = z.object({
-    ownerId: z.number(),
     currency: z.enum(Object.keys(assetNetworks) as Currency[]),
     network: z.enum(uniqueNetworks),
 }).strict().refine((data) => {
@@ -75,12 +74,12 @@ app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
 });
 
-app.post('/wallets', (req:Request, res:Response) => {
+app.post('/wallets', validateUserLogin, (req:Request, res:Response) => {
     const result = createWallet.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
     const newWallet: Wallet = {
         id: basicIdOfWallets++,
-        ownerId: result.data.ownerId,
+        userId: req.userId,
         address: "PLACEHOLDER_ADDRESS",
         balance: 0n,
         currency: result.data.currency,
@@ -91,14 +90,16 @@ app.post('/wallets', (req:Request, res:Response) => {
     res.status(201).json({message:"Wallet successfully created"})
 })
 
-app.get('/wallets/:id' , (req:Request,res:Response) => {
+app.get('/wallets/:id' , validateUserLogin , (req:Request,res:Response) => {
     const wallet = wallets.find(w => w.id === Number(req.params.id));
-    if(!wallet) return res.status(404).json({message: "Wallet with such id not found"})
+    if(!wallet) return res.status(404).json({message: "Wallet with such id not found"});
+    if(wallet.userId !== req.userId) return res.status(404).json({message: "Wallet with such id not found"});
     res.json(wallet);
 })
 
-app.get('/wallets' , (req:Request,res:Response) => {
-    res.json(wallets);
+app.get('/wallets' , validateUserLogin , (req:Request,res:Response) => {
+    const allUserWallets = wallets.filter(w => w.userId === req.userId);
+    res.json(allUserWallets);
 })
 
 app.post('/auth/register', async (req:Request,res:Response) => {

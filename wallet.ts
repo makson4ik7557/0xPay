@@ -8,7 +8,7 @@ export type Networks = typeof assetNetworks[Currency][number];
 
 export interface Wallet{
     id: number;
-    ownerId: number;
+    userId: number;
     address: string;
     balance: bigint;
     decimals: number;

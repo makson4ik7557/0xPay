@@ -1,20 +1,3 @@
-####
-#POST http://localhost:3000/wallets
-#Content-Type: application/json
-#
-#{
-#  "ownerId": 1,
-#  "currency": "BTC",
-#  "network": "BITCOIN"
-#}
-####
-#
-####
-#GET http://localhost:3000/wallets
-#Content-Type: application/json
-#
-####
-
 ###
 POST http://localhost:3000/auth/register
 Content-Type: application/json
@@ -38,5 +21,55 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3000/auth/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMjkyODA0LCJleHAiOjE3ODIyOTY0MDR9.dwWY1sO7Q2s8hc29UE829bzK-3CiGma9KBYftydwK5c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMzIzMzk0LCJleHAiOjE3ODIzMjY5OTR9.XJG7bLJ_lgDw3fHFqT4hrHyMkG3JCcZGnv4diX545WE
+###
+
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser52@gmail.com",
+  "password": "TestPassword52.",
+  "confirmPassword": "TestPassword52."
+}
+###
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser52@gmail.com",
+  "password": "TestPassword52."
+}
+###
+
+###
+POST http://localhost:3000/wallets
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMzIzMzk0LCJleHAiOjE3ODIzMjY5OTR9.XJG7bLJ_lgDw3fHFqT4hrHyMkG3JCcZGnv4diX545WE
+
+{
+  "currency": "BTC",
+  "network": "BITCOIN"
+}
+###
+
+###
+GET http://localhost:3000/wallets
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMzIzMzk0LCJleHAiOjE3ODIzMjY5OTR9.XJG7bLJ_lgDw3fHFqT4hrHyMkG3JCcZGnv4diX545WE
+###
+
+###
+GET http://localhost:3000/wallets/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyMzIzMzk0LCJleHAiOjE3ODIzMjY5OTR9.XJG7bLJ_lgDw3fHFqT4hrHyMkG3JCcZGnv4diX545WE
+###
+
+###
+GET http://localhost:3000/wallets/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzgyMzI1NzI5LCJleHAiOjE3ODIzMjkzMjl9.gJT2amXSQfWTbu4dq3OaYThEMUHQH6FJcXJneOTzCuo
 ###
