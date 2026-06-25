@@ -2,6 +2,7 @@ import express from "express";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import 'dotenv/config';
+import { Pool } from "pg";
 import type {Response,Request,NextFunction} from "express";
 import type {Currency, Wallet} from "./wallet.js";
 import type {User} from "./user.js";
@@ -17,6 +18,18 @@ let basicIdOfUsers = 1;
 const loginError = "Incorrect personal data: check password or email";
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+});
+
+async function checkDbConnection() {
+    try {
+        const result = await pool.query("SELECT 1");
+        console.log("DB connected:", result.rows);
+    } catch (err) {
+        console.error("DB connection failed:", err);
+    }
+}
 
 (BigInt.prototype as any).toJSON = function (){
     return this.toString();
@@ -149,6 +162,7 @@ app.get('/auth/me', validateUserLogin ,(req:Request,res:Response) => {
     });
 });
 
+checkDbConnection();
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/health`);
 });
