@@ -17,4 +17,16 @@ model User {
   email String @unique
   passwordHash String
   createdAt DateTime @default(now())
+  wallets Wallet[]
+}
+
+model Wallet {
+  id Int @id @default(autoincrement())
+  address String
+  balance BigInt @default(0)
+  currency String
+  network String
+  createdAt DateTime @default(now())
+  userId Int
+  user User @relation(fields: [userId],references: [id])
 }
