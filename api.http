@@ -3,7 +3,18 @@ POST http://localhost:3000/auth/register
 Content-Type: application/json
 
 {
-  "email": "testuser212@gmail.com",
+  "email": "testuser213@gmail.com",
+  "password": "TestPassword123.",
+  "confirmPassword": "TestPassword123."
+}
+###
+
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "email": "testuser213@gmail.com",
   "password": "TestPassword123.",
   "confirmPassword": "TestPassword123."
 }

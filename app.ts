@@ -8,20 +8,24 @@ import type {Currency, Wallet} from "./wallet.js";
 import type {User} from "./user.js";
 import {assetNetworks} from "./wallet.js"
 import {z} from "zod"
-
+import { PrismaClient } from "./generated/prisma/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Prisma } from "./generated/prisma/client.js";
 
 const app = express();
 app.use(express.json());
 let port = 3000;
 let basicIdOfWallets = 1;
-let basicIdOfUsers = 1;
 const loginError = "Incorrect personal data: check password or email";
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
-
 async function checkDbConnection() {
     try {
         const result = await pool.query("SELECT 1");
@@ -60,8 +64,8 @@ const currencyDecimals = {
     ETH: 18,
     USDT: 6,
 } as const;
-
 const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat())];
+
 const createWallet = z.object({
     currency: z.enum(Object.keys(assetNetworks) as Currency[]),
     network: z.enum(uniqueNetworks),
@@ -118,17 +122,23 @@ app.get('/wallets' , validateUserLogin , (req:Request,res:Response) => {
 app.post('/auth/register', async (req:Request,res:Response) => {
     const result = userRegistration.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
-    const emailValidation = users.some(u => u.email === result.data.email);
-    if(emailValidation) return res.status(409).json({error: "This email is already taken."});
     const hashedPassword = await argon2.hash(result.data.password);
-    const newUser: User = {
-        id: basicIdOfUsers++,
-        email: result.data.email,
-        passwordHash: hashedPassword,
-        createdAt: Date.now(),
+    try {
+        const user = await prisma.user.create({
+            data: { email: result.data.email, passwordHash: hashedPassword },
+        });
+        return res.status(201).json({
+            id: user.id,
+            email: user.email,
+            createdAt: user.createdAt,
+        });
+    } catch (err) {
+        if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"){
+            return res.status(409).json({error: "This email is already taken."});
+        }
+        console.error(err);
+        return res.status(500).json({error: 'Internal server error'});
     }
-    users.push(newUser);
-    res.status(201).json({message:"User successfully created"})
 })
 
 app.post('/auth/login', async (req:Request,res:Response) => {
