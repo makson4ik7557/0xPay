@@ -2,10 +2,8 @@ import express from "express";
 import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import 'dotenv/config';
-import { Pool } from "pg";
 import type {Response,Request,NextFunction} from "express";
 import type {Currency, Wallet} from "./wallet.js";
-import type {User} from "./user.js";
 import {assetNetworks} from "./wallet.js"
 import {z} from "zod"
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -22,18 +20,6 @@ if(!secretKey) throw new Error("SECRET_KEY is not set");
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
-
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-});
-async function checkDbConnection() {
-    try {
-        const result = await pool.query("SELECT 1");
-        console.log("DB connected:", result.rows);
-    } catch (err) {
-        console.error("DB connection failed:", err);
-    }
-}
 
 (BigInt.prototype as any).toJSON = function (){
     return this.toString();
@@ -57,7 +43,6 @@ const validateUserLogin = function(req:Request, res:Response, next: NextFunction
 }
 
 const wallets: Wallet[] = [];
-const users: User[] = [];
 
 const currencyDecimals = {
     BTC: 8,
@@ -144,17 +129,17 @@ app.post('/auth/register', async (req:Request,res:Response) => {
 app.post('/auth/login', async (req:Request,res:Response) => {
     const result = userLogin.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
-    const emailValidatedUser = users.find(u => u.email === result.data.email);
-    if(!emailValidatedUser) return res.status(401).json({error: loginError});
     try {
-        const isMatch = await argon2.verify(emailValidatedUser.passwordHash, result.data.password);
+        const user = await prisma.user.findUnique({where: {email: result.data.email}});
+        if(!user) return res.status(401).json({error: "Incorrect email or password"});
+        const isMatch = await argon2.verify(user.passwordHash, result.data.password);
         if (isMatch) {
-            const token = jwt.sign({ id: emailValidatedUser.id}, secretKey , {
+            const token = jwt.sign({ id: user.id}, secretKey , {
                 expiresIn: '1 hour',
             });
         return res.json({ token: token });
         } else {
-            return res.status(401).json({error: loginError});
+            return res.status(401).json({error: "Incorrect email or password"});
         }
     } catch (err) {
         console.error(err);
@@ -162,17 +147,16 @@ app.post('/auth/login', async (req:Request,res:Response) => {
     }
 });
 
-app.get('/auth/me', validateUserLogin ,(req:Request,res:Response) => {
-    const user = users.find(u => u.id === req.userId);
-    if(!user) return res.status(404).json({error: "User not found"});
+app.get('/auth/me', validateUserLogin , async (req:Request,res:Response) => {
+    const validatedUser = await prisma.user.findUnique({where: {id: req.userId}})
+    if(!validatedUser) return res.status(404).json({error: "User not found"});
     res.json({
-        id: user.id,
-        email: user.email,
-        createdAt: user.createdAt,
+        id: validatedUser.id,
+        email: validatedUser.email,
+        createdAt: validatedUser.createdAt,
     });
 });
 
-checkDbConnection();
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/health`);
 });
