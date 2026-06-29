@@ -3,7 +3,7 @@ import argon2 from "argon2";
 import jwt from "jsonwebtoken";
 import 'dotenv/config';
 import type {Response,Request,NextFunction} from "express";
-import type {Currency, Wallet} from "./wallet.js";
+import type {Currency} from "./wallet.js";
 import {assetNetworks} from "./wallet.js"
 import {z} from "zod"
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -13,8 +13,6 @@ import { Prisma } from "./generated/prisma/client.js";
 const app = express();
 app.use(express.json());
 let port = 3000;
-let basicIdOfWallets = 1;
-const loginError = "Incorrect personal data: check password or email";
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
 
@@ -42,8 +40,6 @@ const validateUserLogin = function(req:Request, res:Response, next: NextFunction
     }
 }
 
-const wallets: Wallet[] = [];
-
 const currencyDecimals = {
     BTC: 8,
     ETH: 18,
@@ -56,7 +52,7 @@ const createWallet = z.object({
     network: z.enum(uniqueNetworks),
 }).strict().refine((data) => {
      return (assetNetworks[data.currency] as readonly string[]).includes(data.network);
-}, {message: "Enter correct chain for such currency"});
+     }, {message: "Enter correct chain for such currency"});
 
 const userRegistration = z.object({
     email: z.email(),
@@ -76,32 +72,32 @@ app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
 });
 
-app.post('/wallets', validateUserLogin, (req:Request, res:Response) => {
+app.post('/wallets', validateUserLogin, async (req:Request, res:Response) => {
     const result = createWallet.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
-    const newWallet: Wallet = {
-        id: basicIdOfWallets++,
-        userId: req.userId,
-        address: "PLACEHOLDER_ADDRESS",
-        balance: 0n,
-        currency: result.data.currency,
-        decimals: currencyDecimals[result.data.currency],
-        network: result.data.network
-    }
-    wallets.push(newWallet);
-    res.status(201).json({message:"Wallet successfully created"})
+    const newWallet = await prisma.wallet.create({
+        data : {userId: req.userId , address: "PLACEHOLDER_ADDRESS" , currency: result.data.currency , network: result.data.network}
+    })
+    return res.status(201).json({
+        id: newWallet.id,
+        userId: newWallet.userId,
+        address: newWallet.address,
+        balance: newWallet.balance,
+        currency: newWallet.currency,
+        network: newWallet.network,
+        createdAt: newWallet.createdAt,
+    })
 })
 
-app.get('/wallets/:id' , validateUserLogin , (req:Request,res:Response) => {
-    const wallet = wallets.find(w => w.id === Number(req.params.id));
+app.get('/wallets/:id' , validateUserLogin , async (req:Request,res:Response) => {
+    const wallet = await prisma.wallet.findFirst({where: {id: Number(req.params.id) , userId: req.userId}});
     if(!wallet) return res.status(404).json({message: "Wallet with such id not found"});
-    if(wallet.userId !== req.userId) return res.status(404).json({message: "Wallet with such id not found"});
-    res.json(wallet);
+    return res.json(wallet);
 })
 
-app.get('/wallets' , validateUserLogin , (req:Request,res:Response) => {
-    const allUserWallets = wallets.filter(w => w.userId === req.userId);
-    res.json(allUserWallets);
+app.get('/wallets' , validateUserLogin , async (req:Request,res:Response) => {
+    const allUserWallets = await prisma.wallet.findMany({where: {userId: req.userId}});
+    return res.json(allUserWallets);
 })
 
 app.post('/auth/register', async (req:Request,res:Response) => {
