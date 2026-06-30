@@ -40,18 +40,13 @@ const validateUserLogin = function(req:Request, res:Response, next: NextFunction
     }
 }
 
-const currencyDecimals = {
-    BTC: 8,
-    ETH: 18,
-    USDT: 6,
-} as const;
-const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat())];
+const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat().map(n => n.name))];
 
 const createWallet = z.object({
     currency: z.enum(Object.keys(assetNetworks) as Currency[]),
     network: z.enum(uniqueNetworks),
 }).strict().refine((data) => {
-     return (assetNetworks[data.currency] as readonly string[]).includes(data.network);
+     return assetNetworks[data.currency].some(net => net.name === data.network);
      }, {message: "Enter correct chain for such currency"});
 
 const userRegistration = z.object({

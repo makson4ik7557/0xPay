@@ -25,21 +25,21 @@ Content-Type: application/json
 ####
 
 
-####
-#POST http://localhost:3000/wallets
-#Content-Type: application/json
-#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjc0MTcwMywiZXhwIjoxNzgyNzQ1MzAzfQ.4lo3dJynx6jYibgp9CGKxhWwaso_ecJuoD12iRpH1tw
-#
-#{
-#  "currency": "BTC",
-#  "network": "BITCOIN"
-#}
-####
-
-
 ###
-GET http://localhost:3000/wallets/1
+POST http://localhost:3000/wallets
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjc2NTA5NSwiZXhwIjoxNzgyNzY4Njk1fQ.xxPWVHMpdh10WSYDmteitwc7htujQ4UOQfiVAJAoanI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjg0MzMyMSwiZXhwIjoxNzgyODQ2OTIxfQ.wez7SEbd96pyZ9ZFHaI6s9J2r2XNwlXduA84o3HuNPE
+
+{
+  "currency": "BTC",
+  "network": "BITCOIN"
+}
 ###
+
+
+####
+#GET http://localhost:3000/wallets/1
+#Content-Type: application/json
+#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjc2NTA5NSwiZXhwIjoxNzgyNzY4Njk1fQ.xxPWVHMpdh10WSYDmteitwc7htujQ4UOQfiVAJAoanI
+####
 
