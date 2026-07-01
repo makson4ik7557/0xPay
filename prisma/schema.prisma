@@ -29,4 +29,26 @@ model Wallet {
   createdAt DateTime @default(now())
   userId Int
   user User @relation(fields: [userId],references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id Int @id @default(autoincrement())
+  transactionHash String @unique
+  type Type
+  amount BigInt
+  createdAt DateTime @default(now())
+  status PossibleStatus @default(pending)
+  walletId Int
+  wallet Wallet @relation(fields: [walletId] , references: [id])
+}
+
+enum Type {
+  deposit
+  withdrawal
+}
+
+enum PossibleStatus {
+  pending
+  confirmed
 }
