@@ -63,6 +63,11 @@ const userLogin = z.object({
     password: z.string().min(8),
 });
 
+const depositScheme = z.object({
+    hash: z.string(),
+    amount: z.number().int().positive()
+})
+
 app.get('/health', (req:Request,res:Response) => {
     res.json({status: "ok"})
 });
@@ -82,6 +87,35 @@ app.post('/wallets', validateUserLogin, async (req:Request, res:Response) => {
         network: newWallet.network,
         createdAt: newWallet.createdAt,
     })
+})
+
+class WalletNotFoundError extends Error {}
+app.post('/wallets/:id/deposits' , validateUserLogin , async(req:Request,res:Response) => {
+    const result = depositScheme.safeParse(req.body);
+    if(!result.success) return res.status(400).json({error: result.error});
+    try {
+        const dep = await prisma.$transaction(async (tx) => {
+            const wallet = await tx.wallet.findFirst({where: {id: Number(req.params.id), userId: req.userId}});
+            if (!wallet) throw new WalletNotFoundError()
+            const newDep = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "deposit", amount: BigInt(result.data.amount), walletId: wallet.id} })
+            const walletBalance = await tx.wallet.update({
+                where: {id: wallet.id},
+                data: {balance: {increment: BigInt(result.data.amount)}}
+            });
+            return {newDep , walletBalance};
+        })
+        return res.status(201).json({
+            id: dep.newDep.id,
+            amount: dep.newDep.amount,
+            type: dep.newDep.type,
+            status: dep.newDep.status,
+            createdAt: dep.newDep.createdAt,
+            balance: dep.walletBalance.balance
+        })
+    } catch(err){
+        if(err instanceof WalletNotFoundError) return res.status(404).json("Wallet with such id is not found");
+        else return res.status(500).json({error: 'Internal server error'});
+    }
 })
 
 app.get('/wallets/:id' , validateUserLogin , async (req:Request,res:Response) => {

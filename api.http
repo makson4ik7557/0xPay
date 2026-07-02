@@ -19,22 +19,34 @@ Content-Type: application/json
 }
 ###
 
+###
+POST http://localhost:3000/wallets/10/deposits
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjk5NTgwMSwiZXhwIjoxNzgyOTk5NDAxfQ.FlCvZW3SLGEO2rOkA6SabuQqvYFMU0vKh-_9E1BzlK0
+
+{
+  "hash": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+  "amount": 500
+}
+###
+
+
 ####
 #GET http://localhost:3000/auth/me
 #Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzgyNjI4NDA5LCJleHAiOjE3ODI2MzIwMDl9.rU6kE4fWHpEL_hOsnuJmDkpyHwXg5Yc6EVnYbdrOYTA
 ####
 
 
-###
-POST http://localhost:3000/wallets
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjg0MzMyMSwiZXhwIjoxNzgyODQ2OTIxfQ.wez7SEbd96pyZ9ZFHaI6s9J2r2XNwlXduA84o3HuNPE
-
-{
-  "currency": "BTC",
-  "network": "BITCOIN"
-}
-###
+####
+#POST http://localhost:3000/wallets
+#Content-Type: application/json
+#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjg0MzMyMSwiZXhwIjoxNzgyODQ2OTIxfQ.wez7SEbd96pyZ9ZFHaI6s9J2r2XNwlXduA84o3HuNPE
+#
+#{
+#  "currency": "BTC",
+#  "network": "BITCOIN"
+#}
+####
 
 
 ####
