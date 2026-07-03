@@ -113,7 +113,21 @@ app.post('/wallets/:id/deposits' , validateUserLogin , async(req:Request,res:Res
             balance: dep.walletBalance.balance
         })
     } catch(err){
-        if(err instanceof WalletNotFoundError) return res.status(404).json("Wallet with such id is not found");
+        if(err instanceof WalletNotFoundError) return res.status(404).json({error: "Wallet with such id is not found"});
+        else if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+            const existingTransaction = await prisma.transaction.findUnique({where: {transactionHash: result.data.hash}});
+            if(!existingTransaction) return res.status(500).json({error: 'Internal server error'});
+            const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
+            if(!userBalance) return res.status(500).json({error: 'Internal server error'});
+            return res.status(200).json({
+                id: existingTransaction.id,
+                amount: existingTransaction.amount,
+                type: existingTransaction.type,
+                status: existingTransaction.status,
+                createdAt: existingTransaction.createdAt,
+                balance: userBalance.balance
+            });
+        }
         else return res.status(500).json({error: 'Internal server error'});
     }
 })

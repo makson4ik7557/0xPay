@@ -22,10 +22,10 @@ Content-Type: application/json
 ###
 POST http://localhost:3000/wallets/10/deposits
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjk5NTgwMSwiZXhwIjoxNzgyOTk5NDAxfQ.FlCvZW3SLGEO2rOkA6SabuQqvYFMU0vKh-_9E1BzlK0
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4MzA5Mjc2NiwiZXhwIjoxNzgzMDk2MzY2fQ.je3VAVsZ8X6Uu-Me3jXI0pt2XDuQanaMFjZD7Xcxd4M
 
 {
-  "hash": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+  "hash": "0xabc123",
   "amount": 500
 }
 ###
