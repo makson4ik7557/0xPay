@@ -165,24 +165,19 @@ app.post('/auth/register', async (req:Request,res:Response) => {
     }
 })
 
-app.post('/auth/login', async (req:Request,res:Response) => {
+app.post('/auth/login', async (req:Request,res:Response,_next:NextFunction) => {
     const result = userLogin.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
-    try {
-        const user = await prisma.user.findUnique({where: {email: result.data.email}});
-        if(!user) return res.status(401).json({error: "Incorrect email or password"});
-        const isMatch = await argon2.verify(user.passwordHash, result.data.password);
-        if (isMatch) {
-            const token = jwt.sign({ id: user.id}, secretKey , {
-                expiresIn: '1 hour',
-            });
+    const user = await prisma.user.findUnique({where: {email: result.data.email}});
+    if(!user) return res.status(401).json({error: "Incorrect email or password"});
+    const isMatch = await argon2.verify(user.passwordHash, result.data.password);
+    if (isMatch) {
+        const token = jwt.sign({ id: user.id}, secretKey , {
+            expiresIn: '1 hour',
+        });
         return res.json({ token: token });
-        } else {
-            return res.status(401).json({error: "Incorrect email or password"});
-        }
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({error: 'Internal server error'});
+    } else {
+        return res.status(401).json({error: "Incorrect email or password"});
     }
 });
 
@@ -195,6 +190,11 @@ app.get('/auth/me', validateUserLogin , async (req:Request,res:Response) => {
         createdAt: validatedUser.createdAt,
     });
 });
+
+app.use((err:Error, _req:Request, res:Response, _next:NextFunction) => {
+    if(err instanceof WalletNotFoundError) return res.status(404).json({message: "Wallet with such id is not found"});
+    else return res.status(500).json({error: "Something went wrong" });
+})
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}/health`);
