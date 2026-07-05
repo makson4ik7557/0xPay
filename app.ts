@@ -113,12 +113,12 @@ app.post('/wallets/:id/deposits' , validateUserLogin , async(req:Request,res:Res
             balance: dep.walletBalance.balance
         })
     } catch(err){
-        if(err instanceof WalletNotFoundError) return res.status(404).json({error: "Wallet with such id is not found"});
+        if(err instanceof WalletNotFoundError) throw new WalletNotFoundError();
         else if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
             const existingTransaction = await prisma.transaction.findUnique({where: {transactionHash: result.data.hash}});
-            if(!existingTransaction) return res.status(500).json({error: 'Internal server error'});
+            if(!existingTransaction) throw new Error;
             const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
-            if(!userBalance) return res.status(500).json({error: 'Internal server error'});
+            if(!userBalance) throw new Error;
             return res.status(200).json({
                 id: existingTransaction.id,
                 amount: existingTransaction.amount,
@@ -128,7 +128,7 @@ app.post('/wallets/:id/deposits' , validateUserLogin , async(req:Request,res:Res
                 balance: userBalance.balance
             });
         }
-        else return res.status(500).json({error: 'Internal server error'});
+        else throw new Error;
     }
 })
 
@@ -143,7 +143,8 @@ app.get('/wallets' , validateUserLogin , async (req:Request,res:Response) => {
     return res.json(allUserWallets);
 })
 
-app.post('/auth/register', async (req:Request,res:Response) => {
+class EmailAlreadyTakenError extends Error {}
+app.post('/auth/register', async (req:Request,res:Response,_next:NextFunction) => {
     const result = userRegistration.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
     const hashedPassword = await argon2.hash(result.data.password);
@@ -158,10 +159,8 @@ app.post('/auth/register', async (req:Request,res:Response) => {
         });
     } catch (err) {
         if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"){
-            return res.status(409).json({error: "This email is already taken."});
+            throw new EmailAlreadyTakenError();
         }
-        console.error(err);
-        return res.status(500).json({error: 'Internal server error'});
     }
 })
 
@@ -193,6 +192,7 @@ app.get('/auth/me', validateUserLogin , async (req:Request,res:Response) => {
 
 app.use((err:Error, _req:Request, res:Response, _next:NextFunction) => {
     if(err instanceof WalletNotFoundError) return res.status(404).json({message: "Wallet with such id is not found"});
+    else if(err instanceof EmailAlreadyTakenError) return res.status(409).json({error: "This email is already taken."});
     else return res.status(500).json({error: "Something went wrong" });
 })
 
