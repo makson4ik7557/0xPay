@@ -3,31 +3,31 @@
 #Content-Type: application/json
 #
 #{
-#  "email": "testuser3223@gmail.com",
+#  "email": "testuser555@gmail.com",
 #  "password": "TestPassword123.",
 #  "confirmPassword": "TestPassword123."
 #}
 ####
 
-###
-POST http://localhost:3000/auth/login
-Content-Type: application/json
-
-{
-  "email": "testuser3223@gmail.com",
-  "password": "TestPassword123."
-}
-###
-
-
+####
+#POST http://localhost:3000/auth/login
+#Content-Type: application/json
+#
+#{
+#  "email": "testuser3223@gmail.com",
+#  "password": "TestPassword123."
+#}
+####
+#
+#
 ###
 POST http://localhost:3000/wallets/11/deposits
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzI3NDYxNywiZXhwIjoxNzgzMjc4MjE3fQ.MEtPpY8a0pLhpTDztG-V2Hxz5lhuT0NZq_9fMZYcIkQ
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzM2MjY5NiwiZXhwIjoxNzgzMzY2Mjk2fQ.TKbi3mqI05ZKGIVuY1u--hNQsD_wIyyglOwxBM8OOFc
 
 {
-  "hash": "0xabc1232",
-  "amount": 500
+  "hash": "0xabc5252",
+  "amount": 666
 }
 ###
 
@@ -41,7 +41,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6M
 ####
 #POST http://localhost:3000/wallets
 #Content-Type: application/json
-#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzI3NDYxNywiZXhwIjoxNzgzMjc4MjE3fQ.MEtPpY8a0pLhpTDztG-V2Hxz5lhuT0NZq_9fMZYcIkQ
+#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzM2MjY5NiwiZXhwIjoxNzgzMzY2Mjk2fQ.TKbi3mqI05ZKGIVuY1u--hNQsD_wIyyglOwxBM8OOFc
 #
 #{
 #  "currency": "BTC",
@@ -51,8 +51,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6M
 
 
 ####
-#GET http://localhost:3000/wallets/1
+#GET http://localhost:3000/wallets/11
 #Content-Type: application/json
-#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTQsImlhdCI6MTc4Mjc2NTA5NSwiZXhwIjoxNzgyNzY4Njk1fQ.xxPWVHMpdh10WSYDmteitwc7htujQ4UOQfiVAJAoanI
+#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzM2MjY5NiwiZXhwIjoxNzgzMzY2Mjk2fQ.TKbi3mqI05ZKGIVuY1u--hNQsD_wIyyglOwxBM8OOFc
+####
+
+####
+#GET http://localhost:3000/wallets
+#Content-Type: application/json
+#Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTYsImlhdCI6MTc4MzI3NDYxNywiZXhwIjoxNzgzMjc4MjE3fQ.MEtPpY8a0pLhpTDztG-V2Hxz5lhuT0NZq_9fMZYcIkQ
 ####
 
