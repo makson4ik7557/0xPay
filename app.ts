@@ -8,7 +8,6 @@ import walletsRouter from "./routes/wallets.js";
 
 const app = express();
 app.use(express.json());
-let port = 3000;
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
 
@@ -27,6 +26,4 @@ app.use('/auth', authRouter);
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/health`);
-});
+export default app;
