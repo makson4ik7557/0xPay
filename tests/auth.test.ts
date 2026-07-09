@@ -108,3 +108,27 @@ test("POST /wallets/:id/deposits - Duplicate hash keeps balance -> 200", async()
     expect(secondDepositRes.status).toBe(200);
     expect(updatedWallet!.balance).toBe(BigInt(depositAmount));
 })
+
+test("POST /wallets/:id/deposits - deposit to not existed wallet -> 404", async() => {
+    const email = "test@email.com";
+    const registration = {
+        email: email ,
+        password: "labubu212",
+        confirmPassword: "labubu212"
+    }
+    const registrationRes = await request(app).post('/auth/register').send(registration);
+    const userInDb = await prisma.user.findUnique({ where: { email } });
+    expect(registrationRes.status).toBe(201);
+    expect(userInDb).not.toBeNull();
+    const loginRes = await request(app).post('/auth/login').send({email:email,password:"labubu212"});
+    const token = loginRes.body.token;
+    expect(loginRes.status).toBe(200);
+    expect(token).toBeDefined();
+    const depositAmount = 100;
+    const depositData = {
+        hash: "0xabc5252h1su1",
+        amount: depositAmount
+    }
+    const depositRes = await request(app).post(`/wallets/-1/deposits`).send(depositData).set('Authorization',`Bearer ${token}`);
+    expect(depositRes.status).toBe(404);
+})
