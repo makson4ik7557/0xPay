@@ -50,3 +50,8 @@ export const depositScheme = z.object({
     hash: z.string(),
     amount: z.number().int().positive()
 })
+
+export const withdrawalScheme = z.object({
+    hash: z.string(),
+    amount: z.number().int().positive()
+})
