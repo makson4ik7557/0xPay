@@ -1,7 +1,7 @@
 import {type Request, type Response, Router} from "express";
-import {createWallet, depositScheme, validateUserLogin} from "../schemes.js";
+import {createWallet, depositScheme, withdrawalScheme, validateUserLogin} from "../schemes.js";
 import {prisma} from "../prisma.js";
-import {WalletNotFoundError} from "../errors.js";
+import {WalletNotFoundError,InsufficientFundsError} from "../errors.js";
 import { Prisma } from "../generated/prisma/client.js";
 
 
@@ -31,24 +31,23 @@ router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response
         const dep = await prisma.$transaction(async (tx) => {
             const wallet = await tx.wallet.findFirst({where: {id: Number(req.params.id), userId: req.userId}});
             if (!wallet) throw new WalletNotFoundError()
-            const newDep = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "deposit", amount: BigInt(result.data.amount), walletId: wallet.id} })
+            const newDepTx = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "deposit", amount: BigInt(result.data.amount), walletId: wallet.id} })
             const walletBalance = await tx.wallet.update({
                 where: {id: wallet.id},
                 data: {balance: {increment: BigInt(result.data.amount)}}
             });
-            return {newDep , walletBalance};
+            return {newDepTx , walletBalance};
         })
         return res.status(201).json({
-            id: dep.newDep.id,
-            amount: dep.newDep.amount,
-            type: dep.newDep.type,
-            status: dep.newDep.status,
-            createdAt: dep.newDep.createdAt,
+            id: dep.newDepTx.id,
+            amount: dep.newDepTx.amount,
+            type: dep.newDepTx.type,
+            status: dep.newDepTx.status,
+            createdAt: dep.newDepTx.createdAt,
             balance: dep.walletBalance.balance
         })
     } catch(err){
-        if(err instanceof WalletNotFoundError) throw new WalletNotFoundError();
-        else if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+        if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
             const existingTransaction = await prisma.transaction.findUnique({where: {transactionHash: result.data.hash}});
             if(!existingTransaction) throw new Error;
             const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
@@ -62,7 +61,7 @@ router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response
                 balance: userBalance.balance
             });
         }
-        else throw new Error;
+        else throw err;
     }
 })
 
