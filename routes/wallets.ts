@@ -77,12 +77,13 @@ router.post("/:id/withdrawals" , validateUserLogin , async(req:Request,res:Respo
                 data: {balance: {decrement: BigInt(result.data.amount)}}
             })
             if(withdrawalResult.count === 0) throw new InsufficientFundsError();
-            const newWithdrawalTx = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "withdrawal", amount: BigInt(result.data.amount), walletId: wallet.id} });
+            const newWithdrawalTx = await tx.transaction.create({data: {idempotencyKey: result.data.idempotencyKey, type: "withdrawal", amount: BigInt(result.data.amount), walletId: wallet.id} });
             const walletAfterWithdrawal = await tx.wallet.findUnique({where: {id: Number(req.params.id)}})
             return {newWithdrawalTx, walletAfterWithdrawal};
         })
         return res.status(201).json({
             id: withdrawal.newWithdrawalTx.id,
+            idempotencyKey: withdrawal.newWithdrawalTx.idempotencyKey,
             amount: withdrawal.newWithdrawalTx.amount,
             type: withdrawal.newWithdrawalTx.type,
             status: withdrawal.newWithdrawalTx.status,
@@ -91,12 +92,13 @@ router.post("/:id/withdrawals" , validateUserLogin , async(req:Request,res:Respo
         })
     } catch (err) {
         if(err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-            const existingTransaction = await prisma.transaction.findUnique({where: {transactionHash: result.data.hash}});
+            const existingTransaction = await prisma.transaction.findUnique({where: {idempotencyKey: result.data.idempotencyKey}});
             if(!existingTransaction) throw new Error;
             const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
             if(!userBalance) throw new Error;
             return res.status(200).json({
                 id: existingTransaction.id,
+                idempotencyKey: existingTransaction.idempotencyKey,
                 amount: existingTransaction.amount,
                 type: existingTransaction.type,
                 status: existingTransaction.status,

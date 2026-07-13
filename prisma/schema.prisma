@@ -29,7 +29,8 @@ model Wallet {
 
 model Transaction {
   id Int @id @default(autoincrement())
-  transactionHash String @unique
+  transactionHash String? @unique
+  idempotencyKey String? @unique
   type Type
   amount BigInt
   createdAt DateTime @default(now())
