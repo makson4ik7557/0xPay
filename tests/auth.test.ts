@@ -129,18 +129,48 @@ test("POST /wallets/:id/withdrawals - withdrawal is successful -> 201", async() 
     expect(depositRes.status).toBe(201);
     const withdrawAmount = 50;
     const withdrawData = {
-        hash: "0xabc5252h1su0-dhg12",
+        idempotencyKey: "0xabc5252h1su0-dhg12",
         amount: withdrawAmount
     }
     const withdrawalRes = await request(app).post(`/wallets/${walletId}/withdrawals`).send(withdrawData).set('Authorization',`Bearer ${token}`);
     const walletAfterWithdrawal = await prisma.wallet.findUnique({where: {id: walletId}});
-    const tx = await prisma.transaction.findUnique({where: {transactionHash: withdrawData.hash}});
+    const tx = await prisma.transaction.findUnique({where: {idempotencyKey: withdrawData.idempotencyKey}});
     expect(tx).not.toBeNull();
     expect(tx!.type).toBe("withdrawal");
     expect(tx!.amount).toBe(BigInt(withdrawAmount));
     expect(walletAfterWithdrawal).not.toBeNull();
     expect(walletAfterWithdrawal!.balance).toBe(50n);
     expect(withdrawalRes.status).toBe(201);
+})
+
+test("POST /wallets/:id/withdrawals - idempotency check -> 200", async() => {
+    const token = await registerAndLogin();
+    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
+    const walletId = walletCreationRes.body.id
+    expect(walletCreationRes.status).toBe(201);
+    const depositAmount = 100;
+    const depositData = {
+        hash: "0xabc5252h1su1",
+        amount: depositAmount
+    }
+    const depositRes = await request(app).post(`/wallets/${walletId}/deposits`).send(depositData).set('Authorization',`Bearer ${token}`);
+    const withdrawAmount = 50;
+    const withdrawData = {
+        idempotencyKey: "0xabc5252h1su0-dhg12",
+        amount: withdrawAmount
+    }
+    const withdrawalRes = await request(app).post(`/wallets/${walletId}/withdrawals`).send(withdrawData).set('Authorization',`Bearer ${token}`);
+    const secondWithdrawalRes = await request(app).post(`/wallets/${walletId}/withdrawals`).send(withdrawData).set('Authorization',`Bearer ${token}`);
+    const tx = await prisma.transaction.findUnique({where: {idempotencyKey: withdrawData.idempotencyKey}});
+    const walletAfterWithdrawal = await prisma.wallet.findUnique({where: {id: walletId}});
+    const txCount = await prisma.transaction.count({where: {walletId: walletId, type: "withdrawal"}})
+    expect(txCount).toBe(1);
+    expect(tx).not.toBeNull();
+    expect(tx!.type).toBe("withdrawal");
+    expect(tx!.amount).toBe(BigInt(withdrawAmount));
+    expect(walletAfterWithdrawal).not.toBeNull();
+    expect(walletAfterWithdrawal!.balance).toBe(50n);
+    expect(secondWithdrawalRes.status).toBe(200);
 })
 
 test("POST /wallets/:id/withdrawals - not enough funds -> 409", async() => {
@@ -160,12 +190,12 @@ test("POST /wallets/:id/withdrawals - not enough funds -> 409", async() => {
     expect(depositRes.status).toBe(201);
     const withdrawAmount = 200;
     const withdrawData = {
-        hash: "0xabc5252h1su0-dhg1221",
+        idempotencyKey: "0xabc5252h1su0-dhg1221",
         amount: withdrawAmount
     }
     const withdrawalRes = await request(app).post(`/wallets/${walletId}/withdrawals`).send(withdrawData).set('Authorization',`Bearer ${token}`);
     const walletAfterWithdrawal = await prisma.wallet.findUnique({where: {id: walletId}});
-    const tx = await prisma.transaction.findUnique({where: {transactionHash: withdrawData.hash}});
+    const tx = await prisma.transaction.findUnique({where: {idempotencyKey: withdrawData.idempotencyKey}});
     expect(tx).toBeNull();
     expect(walletAfterWithdrawal).not.toBeNull();
     expect(walletAfterWithdrawal!.balance).toBe(100n);
