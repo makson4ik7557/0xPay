@@ -61,11 +61,15 @@ test("POST /auth/register дубль email -> 409", async () => {
     expect(res2.status).toBe(409);
 });
 
+async function createWallet(token:string){
+    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
+    expect(walletCreationRes.status).toBe(201);
+    return walletCreationRes.body.id;
+}
+
 test("POST /wallets/:id/deposits - Valid deposit -> 201", async() => {
     const token = await registerAndLogin();
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    const walletId = walletCreationRes.body.id
-    expect(walletCreationRes.status).toBe(201);
+    const walletId = await createWallet(token);
     const depositAmount = 100;
     const depositData = {
         hash: "0xabc5252h1su1",
@@ -80,9 +84,7 @@ test("POST /wallets/:id/deposits - Valid deposit -> 201", async() => {
 
 test("POST /wallets/:id/deposits - Duplicate hash keeps balance -> 200", async() => {
     const token = await registerAndLogin();
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    const walletId = walletCreationRes.body.id
-    expect(walletCreationRes.status).toBe(201);
+    const walletId = await createWallet(token);
     const depositAmount = 100;
     const depositData = {
         hash: "0xabc5252h1su1",
@@ -114,9 +116,7 @@ test("POST /wallets/:id/deposits - deposit to not existed wallet -> 404", async(
 
 test("POST /wallets/:id/withdrawals - withdrawal is successful -> 201", async() => {
     const token = await registerAndLogin();
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    const walletId = walletCreationRes.body.id
-    expect(walletCreationRes.status).toBe(201);
+    const walletId = await createWallet(token);
     const depositAmount = 100;
     const depositData = {
         hash: "0xabc5252h1su1",
@@ -145,9 +145,7 @@ test("POST /wallets/:id/withdrawals - withdrawal is successful -> 201", async() 
 
 test("POST /wallets/:id/withdrawals - idempotency check -> 200", async() => {
     const token = await registerAndLogin();
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    const walletId = walletCreationRes.body.id
-    expect(walletCreationRes.status).toBe(201);
+    const walletId = await createWallet(token);
     const depositAmount = 100;
     const depositData = {
         hash: "0xabc5252h1su1",
@@ -175,9 +173,7 @@ test("POST /wallets/:id/withdrawals - idempotency check -> 200", async() => {
 
 test("POST /wallets/:id/withdrawals - not enough funds -> 409", async() => {
     const token = await registerAndLogin();
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    const walletId = walletCreationRes.body.id
-    expect(walletCreationRes.status).toBe(201);
+    const walletId = await createWallet(token);
     const depositAmount = 100;
     const depositData = {
         hash: "0xabc5252h1su1",
