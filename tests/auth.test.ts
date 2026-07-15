@@ -31,6 +31,17 @@ async function registerAndLogin(){
     return token;
 }
 
+async function createWallet(token:string){
+    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
+    expect(walletCreationRes.status).toBe(201);
+    return walletCreationRes.body.id;
+}
+
+test('GET /auth/me no token -> 401', async() => {
+    const res = await request(app).get('/auth/me');
+    expect(res.status).toBe(401);
+})
+
 test('POST /auth/register -> 201', async () => {
     const email = "test@email.com";
     const registration = {
@@ -44,7 +55,7 @@ test('POST /auth/register -> 201', async () => {
     expect(userInDb).not.toBeNull();
 });
 
-test("POST /auth/register дубль email -> 409", async () => {
+test("POST /auth/register email double -> 409", async () => {
     const email = "test@email.com";
     const registration = {
         email: email ,
@@ -60,12 +71,6 @@ test("POST /auth/register дубль email -> 409", async () => {
     expect(userCount).toBe(1);
     expect(res2.status).toBe(409);
 });
-
-async function createWallet(token:string){
-    const walletCreationRes = await request(app).post('/wallets').send({currency: "BTC", network: "BITCOIN"}).set('Authorization',`Bearer ${token}`);
-    expect(walletCreationRes.status).toBe(201);
-    return walletCreationRes.body.id;
-}
 
 test("POST /wallets/:id/deposits - Valid deposit -> 201", async() => {
     const token = await registerAndLogin();
