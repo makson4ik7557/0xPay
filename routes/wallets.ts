@@ -1,5 +1,5 @@
 import {type Request, type Response, Router} from "express";
-import {createWallet, depositScheme, withdrawalScheme, validateUserLogin} from "../schemes.js";
+import {createWallet, paramsScheme, depositScheme, withdrawalScheme, validateUserLogin} from "../schemes.js";
 import {prisma} from "../prisma.js";
 import {WalletNotFoundError,InsufficientFundsError} from "../errors.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -14,8 +14,7 @@ router.post("/",validateUserLogin, async (req:Request, res:Response) => {
         data : {userId: req.userId , address: "PLACEHOLDER_ADDRESS" , currency: result.data.currency , network: result.data.network}
     })
     return res.status(201).json({
-        id: newWallet.id,
-        userId: newWallet.userId,
+        publicId: newWallet.publicId,
         address: newWallet.address,
         balance: newWallet.balance,
         currency: newWallet.currency,
@@ -24,14 +23,16 @@ router.post("/",validateUserLogin, async (req:Request, res:Response) => {
     })
 })
 
-router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response) => {
+router.post("/:publicId/deposits" , validateUserLogin , async(req:Request,res:Response) => {
     const result = depositScheme.safeParse(req.body);
+    const paramsResult = paramsScheme.safeParse(req.params);
     if(!result.success) return res.status(400).json({error: result.error});
+    else if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
     try {
         const dep = await prisma.$transaction(async (tx) => {
-            const wallet = await tx.wallet.findFirst({where: {id: Number(req.params.id), userId: req.userId}});
-            if (!wallet) throw new WalletNotFoundError()
-            const newDepTx = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "deposit", amount: BigInt(result.data.amount), walletId: wallet.id} })
+            const wallet = await tx.wallet.findFirst({where: {publicId: paramsResult.data.publicId, userId: req.userId}});
+            if (!wallet) throw new WalletNotFoundError();
+            const newDepTx = await tx.transaction.create({data: {transactionHash: result.data.hash, type: "deposit", amount: BigInt(result.data.amount), walletId: wallet.id}})
             const walletBalance = await tx.wallet.update({
                 where: {id: wallet.id},
                 data: {balance: {increment: BigInt(result.data.amount)}}
@@ -39,7 +40,7 @@ router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response
             return {newDepTx , walletBalance};
         })
         return res.status(201).json({
-            id: dep.newDepTx.id,
+            publicId: dep.newDepTx.publicId,
             amount: dep.newDepTx.amount,
             type: dep.newDepTx.type,
             status: dep.newDepTx.status,
@@ -53,7 +54,7 @@ router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response
             const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
             if(!userBalance) throw new Error;
             return res.status(200).json({
-                id: existingTransaction.id,
+                publicId: existingTransaction.publicId,
                 amount: existingTransaction.amount,
                 type: existingTransaction.type,
                 status: existingTransaction.status,
@@ -65,24 +66,26 @@ router.post("/:id/deposits" , validateUserLogin , async(req:Request,res:Response
     }
 })
 
-router.post("/:id/withdrawals" , validateUserLogin , async(req:Request,res:Response) => {
+router.post("/:publicId/withdrawals" , validateUserLogin , async(req:Request,res:Response) => {
     const result = withdrawalScheme.safeParse(req.body);
+    const paramsResult = paramsScheme.safeParse(req.params);
     if(!result.success) return res.status(400).json({error: result.error});
+    else if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
     try {
         const withdrawal = await prisma.$transaction(async(tx) => {
-            const wallet = await tx.wallet.findFirst({where: {id: Number(req.params.id), userId: req.userId}});
+            const wallet = await tx.wallet.findFirst({where: {publicId: paramsResult.data.publicId, userId: req.userId}});
             if(!wallet) throw new WalletNotFoundError();
             const withdrawalResult = await tx.wallet.updateMany({
-                where: {id: Number(req.params.id), userId: req.userId, balance: {gte: BigInt(result.data.amount)}},
+                where: {publicId: paramsResult.data.publicId, userId: req.userId, balance: {gte: BigInt(result.data.amount)}},
                 data: {balance: {decrement: BigInt(result.data.amount)}}
-            })
+            });
             if(withdrawalResult.count === 0) throw new InsufficientFundsError();
             const newWithdrawalTx = await tx.transaction.create({data: {idempotencyKey: result.data.idempotencyKey, type: "withdrawal", amount: BigInt(result.data.amount), walletId: wallet.id} });
-            const walletAfterWithdrawal = await tx.wallet.findUnique({where: {id: Number(req.params.id)}})
+            const walletAfterWithdrawal = await tx.wallet.findUnique({where: {publicId: paramsResult.data.publicId}})
             return {newWithdrawalTx, walletAfterWithdrawal};
         })
         return res.status(201).json({
-            id: withdrawal.newWithdrawalTx.id,
+            publicId: withdrawal.newWithdrawalTx.publicId,
             idempotencyKey: withdrawal.newWithdrawalTx.idempotencyKey,
             amount: withdrawal.newWithdrawalTx.amount,
             type: withdrawal.newWithdrawalTx.type,
@@ -97,7 +100,7 @@ router.post("/:id/withdrawals" , validateUserLogin , async(req:Request,res:Respo
             const userBalance = await prisma.wallet.findUnique({where: {id: existingTransaction.walletId}});
             if(!userBalance) throw new Error;
             return res.status(200).json({
-                id: existingTransaction.id,
+                publicId: existingTransaction.publicId,
                 idempotencyKey: existingTransaction.idempotencyKey,
                 amount: existingTransaction.amount,
                 type: existingTransaction.type,
@@ -110,8 +113,10 @@ router.post("/:id/withdrawals" , validateUserLogin , async(req:Request,res:Respo
     }
 })
 
-router.get("/:id", validateUserLogin , async (req:Request,res:Response) => {
-    const wallet = await prisma.wallet.findFirst({where: {id: Number(req.params.id), userId: req.userId}});
+router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) => {
+    const paramsResult = paramsScheme.safeParse(req.params);
+    if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
+    const wallet = await prisma.wallet.findFirst({where: {publicId: paramsResult.data.publicId, userId: req.userId}});
     if (!wallet) return res.status(404).json({message: "Wallet with such id not found"});
     return res.json(wallet);
 });

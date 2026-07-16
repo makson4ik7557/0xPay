@@ -46,6 +46,8 @@ export const userLogin = z.object({
     password: z.string().min(8),
 });
 
+export const paramsScheme = z.object({publicId: z.uuid()});
+
 export const depositScheme = z.object({
     hash: z.string(),
     amount: z.number().int().positive()
