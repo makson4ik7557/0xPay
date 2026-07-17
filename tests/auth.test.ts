@@ -203,3 +203,21 @@ test("POST /wallets/:publicId/withdrawals - not enough funds -> 409", async() =>
     expect(walletAfterWithdrawal!.balance).toBe(100n);
     expect(withdrawalRes.status).toBe(409);
 })
+
+test("POST /wallets/:publicId/deposits - deposit to another user's wallet -> 404" , async () => {
+    const tokenOfFirstWallet = await registerAndLogin();
+    const tokenOfSecondWallet = await registerAndLogin();
+    const secondWalletPublicId = await createWallet(tokenOfSecondWallet);
+    const testDepositAmount = 100;
+    const testDepositData = {
+        hash: "0xabc5252h1su1",
+        amount: testDepositAmount
+    }
+    const depositOfSecondWalletRes = await request(app).post(`/wallets/${secondWalletPublicId}/deposits`).send(testDepositData).set('Authorization',`Bearer ${tokenOfFirstWallet}`);
+    const walletInDb = await prisma.wallet.findUnique({where: {publicId: secondWalletPublicId}});
+    const transactionInDb = await prisma.transaction.count({where: {walletId: walletInDb!.id}})
+    expect(walletInDb).not.toBeNull();
+    expect(walletInDb!.balance).toBe(0n);
+    expect(transactionInDb).toBe(0);
+    expect(depositOfSecondWalletRes.status).toBe(404);
+})

@@ -118,11 +118,25 @@ router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) =>
     if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
     const wallet = await prisma.wallet.findFirst({where: {publicId: paramsResult.data.publicId, userId: req.userId}});
     if (!wallet) return res.status(404).json({message: "Wallet with such id not found"});
-    return res.json(wallet);
+    return res.json({
+        publicId: wallet.publicId,
+        address: wallet.address,
+        balance: wallet.balance,
+        currency: wallet.currency,
+        network: wallet.network,
+        createdAt: wallet.createdAt
+    });
 });
 
 router.get("/", validateUserLogin , async (req:Request,res:Response) => {
     const allUserWallets = await prisma.wallet.findMany({where: {userId: req.userId}});
-    return res.json(allUserWallets);
+    return res.json(allUserWallets.map(wallet => ({
+        publicId: wallet.publicId,
+        address: wallet.address,
+        balance: wallet.balance,
+        currency: wallet.currency,
+        network: wallet.network,
+        createdAt: wallet.createdAt})
+    ));
 });
 export default router;
