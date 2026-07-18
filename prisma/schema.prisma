@@ -26,6 +26,7 @@ model Wallet {
   userId Int
   user User @relation(fields: [userId],references: [id])
   transactions Transaction[]
+  @@index([userId])
 }
 
 model Transaction {
@@ -39,6 +40,7 @@ model Transaction {
   status PossibleStatus @default(pending)
   walletId Int
   wallet Wallet @relation(fields: [walletId] , references: [id])
+  @@index([walletId])
 }
 
 enum Type {
