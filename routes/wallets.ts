@@ -116,7 +116,10 @@ router.post("/:publicId/withdrawals" , validateUserLogin , async(req:Request,res
 router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) => {
     const paramsResult = paramsScheme.safeParse(req.params);
     if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
-    const wallet = await prisma.wallet.findFirst({where: {publicId: paramsResult.data.publicId, userId: req.userId}});
+    const wallet = await prisma.wallet.findFirst({
+        where: {publicId: paramsResult.data.publicId, userId: req.userId },
+        include: {transactions: { orderBy: { createdAt: "desc" }, take: 20 }}
+    });
     if (!wallet) return res.status(404).json({message: "Wallet with such id not found"});
     return res.json({
         publicId: wallet.publicId,
@@ -124,7 +127,14 @@ router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) =>
         balance: wallet.balance,
         currency: wallet.currency,
         network: wallet.network,
-        createdAt: wallet.createdAt
+        createdAt: wallet.createdAt,
+        transactions: wallet.transactions.map(tx => ({
+            publicId: tx.publicId,
+            amount: tx.amount,
+            type: tx.type,
+            status: tx.status,
+            createdAt: tx.createdAt
+        }))
     });
 });
 

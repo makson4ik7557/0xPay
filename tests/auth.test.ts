@@ -87,6 +87,20 @@ test("POST /wallets/:publicId/deposits - Valid deposit -> 201", async() => {
     expect(depositRes.status).toBe(201);
 })
 
+test("GET /:publicId - Valid result -> 200", async() => {
+    const token = await registerAndLogin();
+    const walletPublicId = await createWallet(token);
+    const depositAmount = 100;
+    const depositData = {
+        hash: "0xabc5252h1su1",
+        amount: depositAmount
+    }
+    const depositRes = await request(app).post(`/wallets/${walletPublicId}/deposits`).send(depositData).set('Authorization',`Bearer ${token}`);
+    const result = await request(app).get(`/wallets/${walletPublicId}`).set('Authorization', `Bearer ${token}`);
+    expect(result.body.transactions[0].amount).toBe("100");
+    expect(result.status).toBe(200);
+})
+
 test("POST /wallets/:publicId/deposits - Duplicate hash keeps balance -> 200", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
