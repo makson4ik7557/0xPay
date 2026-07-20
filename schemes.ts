@@ -50,10 +50,10 @@ export const paramsScheme = z.object({publicId: z.uuid()});
 
 export const depositScheme = z.object({
     hash: z.string(),
-    amount: z.number().int().positive()
+    amount: z.string().regex(/^[1-9]\d*$/, "amount must be a positive integer")
 })
 
 export const withdrawalScheme = z.object({
     idempotencyKey: z.string(),
-    amount: z.number().int().positive()
+    amount: z.string().regex(/^[1-9]\d*$/, "amount must be a positive integer")
 })

@@ -75,7 +75,7 @@ test("POST /auth/register email double -> 409", async () => {
 test("POST /wallets/:publicId/deposits - Valid deposit -> 201", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -90,7 +90,7 @@ test("POST /wallets/:publicId/deposits - Valid deposit -> 201", async() => {
 test("GET /:publicId - Valid result -> 200", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -104,7 +104,7 @@ test("GET /:publicId - Valid result -> 200", async() => {
 test("POST /wallets/:publicId/deposits - Duplicate hash keeps balance -> 200", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -125,7 +125,7 @@ test("POST /wallets/:publicId/deposits - Duplicate hash keeps balance -> 200", a
 test("POST /wallets/:publicId/deposits - deposit to not existed wallet -> 404", async() => {
     const token = await registerAndLogin();
     const fakePublicId = "550e8400-e29b-41d4-a716-446655440000";
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -137,7 +137,7 @@ test("POST /wallets/:publicId/deposits - deposit to not existed wallet -> 404", 
 test("POST /wallets/:publicId/withdrawals - withdrawal is successful -> 201", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -147,7 +147,7 @@ test("POST /wallets/:publicId/withdrawals - withdrawal is successful -> 201", as
     expect(walletInDb).not.toBeNull();
     expect(walletInDb!.balance).toBe(BigInt(depositAmount));
     expect(depositRes.status).toBe(201);
-    const withdrawAmount = 50;
+    const withdrawAmount = "50";
     const withdrawData = {
         idempotencyKey: "0xabc5252h1su0-dhg12",
         amount: withdrawAmount
@@ -166,13 +166,13 @@ test("POST /wallets/:publicId/withdrawals - withdrawal is successful -> 201", as
 test("POST /wallets/:publicId/withdrawals - idempotency check -> 200", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
     }
     const depositRes = await request(app).post(`/wallets/${walletPublicId}/deposits`).send(depositData).set('Authorization',`Bearer ${token}`);
-    const withdrawAmount = 50;
+    const withdrawAmount = "50";
     const withdrawData = {
         idempotencyKey: "0xabc5252h1su0-dhg12",
         amount: withdrawAmount
@@ -194,7 +194,7 @@ test("POST /wallets/:publicId/withdrawals - idempotency check -> 200", async() =
 test("POST /wallets/:publicId/withdrawals - not enough funds -> 409", async() => {
     const token = await registerAndLogin();
     const walletPublicId = await createWallet(token);
-    const depositAmount = 100;
+    const depositAmount = "100";
     const depositData = {
         hash: "0xabc5252h1su1",
         amount: depositAmount
@@ -204,7 +204,7 @@ test("POST /wallets/:publicId/withdrawals - not enough funds -> 409", async() =>
     expect(walletInDb).not.toBeNull();
     expect(walletInDb!.balance).toBe(BigInt(depositAmount));
     expect(depositRes.status).toBe(201);
-    const withdrawAmount = 200;
+    const withdrawAmount = "200";
     const withdrawData = {
         idempotencyKey: "0xabc5252h1su0-dhg1221",
         amount: withdrawAmount
@@ -222,7 +222,7 @@ test("POST /wallets/:publicId/deposits - deposit to another user's wallet -> 404
     const tokenOfFirstWallet = await registerAndLogin();
     const tokenOfSecondWallet = await registerAndLogin();
     const secondWalletPublicId = await createWallet(tokenOfSecondWallet);
-    const testDepositAmount = 100;
+    const testDepositAmount = "100";
     const testDepositData = {
         hash: "0xabc5252h1su1",
         amount: testDepositAmount
