@@ -2,6 +2,7 @@ import type {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import {assetNetworks, type Currency} from "./wallet.js";
 import {z} from "zod";
+import { redis } from "./redis.js"
 
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
@@ -21,6 +22,15 @@ export const validateUserLogin = function(req:Request, res:Response, next: NextF
         console.error(err);
         return res.status(401).json({error: "Unauthorized"});
     }
+}
+
+export const rateLimiter = async function (req:Request, res:Response, next: NextFunction) {
+    const clientId = req.userId;
+    const key = `ratelimit:${clientId}`;
+    const counter = await redis.incr(key);
+    if (counter === 1) await redis.expire(key, 60);
+    if (counter > 5) return res.status(429).json({ error: "Too many requests" });
+    next();
 }
 
 export const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat().map(n => n.name))];

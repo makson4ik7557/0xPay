@@ -1,5 +1,12 @@
 import {type Request, type Response, Router} from "express";
-import {createWallet, paramsScheme, depositScheme, withdrawalScheme, validateUserLogin} from "../schemes.js";
+import {
+    createWallet,
+    paramsScheme,
+    depositScheme,
+    withdrawalScheme,
+    validateUserLogin,
+    rateLimiter
+} from "../schemes.js";
 import {prisma} from "../prisma.js";
 import {WalletNotFoundError,InsufficientFundsError} from "../errors.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -7,7 +14,7 @@ import { Prisma } from "../generated/prisma/client.js";
 
 const router = Router();
 
-router.post("/",validateUserLogin, async (req:Request, res:Response) => {
+router.post("/",validateUserLogin,rateLimiter , async (req:Request, res:Response) => {
     const result = createWallet.safeParse(req.body);
     if(!result.success) return res.status(400).json({error: result.error});
     const newWallet = await prisma.wallet.create({
@@ -23,7 +30,7 @@ router.post("/",validateUserLogin, async (req:Request, res:Response) => {
     })
 })
 
-router.post("/:publicId/deposits" , validateUserLogin , async(req:Request,res:Response) => {
+router.post("/:publicId/deposits" , validateUserLogin ,rateLimiter , async(req:Request,res:Response) => {
     const result = depositScheme.safeParse(req.body);
     const paramsResult = paramsScheme.safeParse(req.params);
     if(!result.success) return res.status(400).json({error: result.error});
@@ -66,7 +73,7 @@ router.post("/:publicId/deposits" , validateUserLogin , async(req:Request,res:Re
     }
 })
 
-router.post("/:publicId/withdrawals" , validateUserLogin , async(req:Request,res:Response) => {
+router.post("/:publicId/withdrawals" , validateUserLogin , rateLimiter , async(req:Request,res:Response) => {
     const result = withdrawalScheme.safeParse(req.body);
     const paramsResult = paramsScheme.safeParse(req.params);
     if(!result.success) return res.status(400).json({error: result.error});
@@ -113,7 +120,7 @@ router.post("/:publicId/withdrawals" , validateUserLogin , async(req:Request,res
     }
 })
 
-router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) => {
+router.get("/:publicId", validateUserLogin ,rateLimiter , async (req:Request,res:Response) => {
     const paramsResult = paramsScheme.safeParse(req.params);
     if(!paramsResult.success) return res.status(400).json({error: paramsResult.error});
     const wallet = await prisma.wallet.findFirst({
@@ -138,7 +145,7 @@ router.get("/:publicId", validateUserLogin , async (req:Request,res:Response) =>
     });
 });
 
-router.get("/", validateUserLogin , async (req:Request,res:Response) => {
+router.get("/", validateUserLogin ,rateLimiter , async (req:Request,res:Response) => {
     const allUserWallets = await prisma.wallet.findMany({where: {userId: req.userId}});
     return res.json(allUserWallets.map(wallet => ({
         publicId: wallet.publicId,
