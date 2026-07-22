@@ -4,6 +4,8 @@ import {assetNetworks, type Currency} from "./wallet.js";
 import {z} from "zod";
 import { redis } from "./redis.js"
 
+const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX ?? "5");
+const RATE_LIMIT_WINDOW = Number(process.env.RATE_LIMIT_WINDOW ?? "60");
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
 
@@ -28,8 +30,8 @@ export const rateLimiter = async function (req:Request, res:Response, next: Next
     const clientId = req.userId;
     const key = `ratelimit:${clientId}`;
     const counter = await redis.incr(key);
-    if (counter === 1) await redis.expire(key, 60);
-    if (counter > 5) return res.status(429).json({ error: "Too many requests" });
+    if (counter === 1) await redis.expire(key, RATE_LIMIT_WINDOW);
+    if (counter > RATE_LIMIT_MAX) return res.status(429).json({ error: "Too many requests" });
     next();
 }
 

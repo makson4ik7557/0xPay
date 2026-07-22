@@ -2,15 +2,18 @@ import { beforeEach, afterAll, test, expect } from "vitest";
 import { prisma } from "../prisma.js";
 import request from 'supertest';
 import app from "../app.js"
+import {redis} from "../redis.js";
 
 beforeEach(async () => {
     await prisma.transaction.deleteMany();
     await prisma.wallet.deleteMany();
     await prisma.user.deleteMany();
+    await redis.flushdb()
 });
 
 afterAll(async () => {
     await prisma.$disconnect();
+    await redis.quit()
 });
 
 async function registerAndLogin(){
