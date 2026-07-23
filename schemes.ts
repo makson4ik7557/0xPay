@@ -4,8 +4,6 @@ import {assetNetworks, type Currency} from "./wallet.js";
 import {z} from "zod";
 import { redis } from "./redis.js"
 
-const RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_MAX ?? "5");
-const RATE_LIMIT_WINDOW = Number(process.env.RATE_LIMIT_WINDOW ?? "60");
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
 
@@ -26,13 +24,14 @@ export const validateUserLogin = function(req:Request, res:Response, next: NextF
     }
 }
 
-export const rateLimiter = async function (req:Request, res:Response, next: NextFunction) {
-    const clientId = req.userId;
-    const key = `ratelimit:${clientId}`;
-    const counter = await redis.incr(key);
-    if (counter === 1) await redis.expire(key, RATE_LIMIT_WINDOW);
-    if (counter > RATE_LIMIT_MAX) return res.status(429).json({ error: "Too many requests" });
-    next();
+export const rateLimiter = function (getClientID: (req:Request) => string,requestsLimit:number,ttl:number){
+    return async function (req:Request, res:Response, next: NextFunction) {
+        const key = `ratelimit:${getClientID(req)}`;
+        const counter = await redis.incr(key);
+        if(counter === 1) await redis.expire(key,ttl);
+        if(counter > requestsLimit) return res.status(429).json({error: "Too many requests"});
+        next();
+    }
 }
 
 export const uniqueNetworks = [...new Set(Object.values(assetNetworks).flat().map(n => n.name))];
