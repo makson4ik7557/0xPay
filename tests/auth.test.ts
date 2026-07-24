@@ -3,6 +3,8 @@ import { prisma } from "../prisma.js";
 import request from 'supertest';
 import app from "../app.js"
 import {redis} from "../redis.js";
+import {rateLimiter} from "../schemes.js";
+import express from "express";
 
 beforeEach(async () => {
     await prisma.transaction.deleteMany();
@@ -39,6 +41,64 @@ async function createWallet(token:string){
     expect(walletCreationRes.status).toBe(201);
     return walletCreationRes.body.publicId;
 }
+
+const wait = function (ms:number){
+    return new Promise((resolve) =>{
+        setTimeout(resolve,ms);
+    })
+}
+
+const testApp = express();
+testApp.use(rateLimiter(req => String(req.headers['client-id'] ?? "unknown"), 3, 1));
+testApp.get("/ping", (req, res) => res.status(200).json({ ok: true }));
+
+
+test('rateLimiter - requests within limit -> 200', async () => {
+    const res1 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res2 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res3 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
+});
+
+test('rateLimiter - limit exceeded -> 429', async () => {
+    const res1 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res2 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res3 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res4 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
+    expect(res4.status).toBe(429);
+});
+
+test('rateLimiter - the window has passed -> 429 then 200', async () => {
+    const res1 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res2 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res3 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res4 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    await wait(1500);
+    const res5 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
+    expect(res4.status).toBe(429);
+    expect(res5.status).toBe(200);
+});
+
+test('rateLimiter - different users -> 200', async () => {
+    const res1 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res2 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res3 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res4 = await request(testApp).get("/ping").set("Client-Id", "pedro");
+    const res5 = await request(testApp).get("/ping").set("Client-Id", "ludik");
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
+    expect(res4.status).toBe(429);
+    expect(res5.status).toBe(200);
+});
 
 test('GET /auth/me no token -> 401', async() => {
     const res = await request(app).get('/auth/me');
