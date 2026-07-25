@@ -24,11 +24,16 @@ export const validateUserLogin = function(req:Request, res:Response, next: NextF
     }
 }
 
+const atomicIncrWithExpiryScript = `
+    local counter = redis.call('INCR',KEYS[1])
+    if counter == 1 then redis.call('EXPIRE',KEYS[1],ARGV[1]) end
+    return counter
+`;
+
 export const rateLimiter = function (getClientID: (req:Request) => string,requestsLimit:number,ttl:number){
     return async function (req:Request, res:Response, next: NextFunction) {
         const key = `ratelimit:${getClientID(req)}`;
-        const counter = await redis.incr(key);
-        if(counter === 1) await redis.expire(key,ttl);
+        const counter = Number(await redis.eval(atomicIncrWithExpiryScript,1, key, ttl));
         if(counter > requestsLimit) return res.status(429).json({error: "Too many requests"});
         next();
     }
