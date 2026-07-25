@@ -106,7 +106,7 @@ test('GET /auth/me no token -> 401', async() => {
 })
 
 test('POST /auth/register -> 201', async () => {
-    const email = "test@email.com";
+    const email = `test-${crypto.randomUUID()}@example.com`;
     const registration = {
         email: email ,
         password: "labubu212",
@@ -119,7 +119,7 @@ test('POST /auth/register -> 201', async () => {
 });
 
 test("POST /auth/register email double -> 409", async () => {
-    const email = "test@email.com";
+    const email = `test-${crypto.randomUUID()}@example.com`;
     const registration = {
         email: email ,
         password: "labubu212",
