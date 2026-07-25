@@ -3,7 +3,7 @@ import { prisma } from "../prisma.js";
 import request from 'supertest';
 import app from "../app.js"
 import {redis} from "../redis.js";
-import {rateLimiter} from "../schemes.js";
+import {rateLimiter} from "../middlewares/rate-limiter.js";
 import express from "express";
 
 beforeEach(async () => {

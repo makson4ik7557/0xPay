@@ -4,7 +4,8 @@ import type {Response,Request} from "express";
 import { errorHandler } from "./errorHandler.js";
 import authRouter from "./routes/auth.js";
 import walletsRouter from "./routes/wallets.js";
-import {validateUserLogin,rateLimiter} from "./schemes.js";
+import {validateUserLogin} from "./schemes.js";
+import {rateLimiter} from "./middlewares/rate-limiter.js";
 
 const secretKey = process.env.SECRET_KEY;
 if(!secretKey) throw new Error("SECRET_KEY is not set");
