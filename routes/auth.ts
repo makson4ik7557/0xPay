@@ -1,4 +1,5 @@
-import {userLogin, userRegistration, validateUserLogin} from "../schemes.js";
+import {userLogin, userRegistration} from "../schemes.js";
+import {validateUserLogin} from "../middlewares/authorization.js"
 import argon2 from "argon2";
 import {Prisma} from "../generated/prisma/client.js";
 import {EmailAlreadyTakenError} from "../errors.js";

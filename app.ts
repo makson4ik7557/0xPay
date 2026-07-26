@@ -4,7 +4,7 @@ import type {Response,Request} from "express";
 import { errorHandler } from "./errorHandler.js";
 import authRouter from "./routes/auth.js";
 import walletsRouter from "./routes/wallets.js";
-import {validateUserLogin} from "./schemes.js";
+import {validateUserLogin} from "./middlewares/authorization.js";
 import {rateLimiter} from "./middlewares/rate-limiter.js";
 
 const secretKey = process.env.SECRET_KEY;
