@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated"
@@ -10,4 +5,80 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  wallets      Wallet[]
+}
+
+model Wallet {
+  publicId     String        @unique @default(uuid())
+  id           Int           @id @default(autoincrement())
+  address      String
+  currency     String
+  network      String
+  createdAt    DateTime      @default(now())
+  userId       Int
+  user         User          @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+  account      Account?
+
+  @@index([userId])
+}
+
+model Transaction {
+  publicId        String         @default(uuid())
+  id              Int            @id @default(autoincrement())
+  transactionHash String?        @unique
+  idempotencyKey  String?        @unique
+  type            Type
+  amount          BigInt
+  createdAt       DateTime       @default(now())
+  status          PossibleStatus @default(pending)
+  walletId        Int
+  wallet          Wallet         @relation(fields: [walletId], references: [id])
+  entries         LedgerEntry[]
+
+  @@index([walletId])
+}
+
+model Account {
+  id        Int           @id @default(autoincrement())
+  createdAt DateTime      @default(now())
+  type      AccountType
+  balance   BigInt        @default(0)
+  walletId  Int?          @unique
+  wallet    Wallet?       @relation(fields: [walletId], references: [id])
+  entries   LedgerEntry[]
+}
+
+// checking movement details of the transaction , THE VIEW FROM USER/SYSTEM BALANCEC
+// => give strict understantion about all balance history
+model LedgerEntry {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  transactionId Int
+  accountId     Int
+  amount        BigInt
+  account       Account     @relation(fields: [accountId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+}
+
+enum Type {
+  deposit
+  withdrawal
+}
+
+enum PossibleStatus {
+  pending
+  confirmed
+}
+
+enum AccountType {
+  USER
+  SYSTEM
 }
