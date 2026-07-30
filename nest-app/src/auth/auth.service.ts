@@ -40,7 +40,7 @@ export class AuthService{
       dto.password,
     );
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
-    const token = this.jwt.sign({ sub: user.id, email: user.email });
+    const token = this.jwt.sign({sub: user.id});
     return {token}
   }
 }
