@@ -30,8 +30,9 @@ export class AuthService{
         throw new ConflictException('Email already taken');
         }
       throw err;
-      }
     }
+  }
+
   async login(dto:LoginDto){
     const user = await this.prisma.user.findUnique({where: {email: dto.email}});
     if(!user) throw new UnauthorizedException('Invalid credentials');
