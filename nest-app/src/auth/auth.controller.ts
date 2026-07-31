@@ -25,6 +25,5 @@ export class AuthController {
   me(@Request() req){
     return req.user.userId;
   }
-
 }
 
