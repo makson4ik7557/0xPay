@@ -3,24 +3,25 @@ import { WalletsService } from './wallets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 
-@Controller()
+@Controller('wallets')
 export class WalletsController {
   constructor(private readonly service: WalletsService) {}
-  @Post('/wallets')
+  @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateWalletDto, @Request() req) {
     const userId = req.user.userId;
     return this.service.createWallet(dto, userId);
   }
-  @Get('/wallets')
+  @Get()
   @UseGuards(JwtAuthGuard)
   getAllWallets(@Request() req) {
     const userId = req.user.userId;
     return this.service.allUserWallets(userId);
   }
-  @Get('/:publicId')
+  @Get(':publicId')
   @UseGuards(JwtAuthGuard)
   getSpecificWallet(@Param('publicId') params, @Request() req) {
-    return this.service.getWallet(params,req);
+    const userId = req.user.userId;
+    return this.service.getWallet(params,userId);
   }
 }
