@@ -43,9 +43,9 @@ export class WalletsService {
       createdAt: w.createdAt,
     }));
   }
-  async getWallet(params: any, req:any) {
+  async getWallet(params: any, userId:any) {
     const wallet = await this.prisma.wallet.findUnique({ where: { publicId: params } });
-    if (!wallet || wallet.userId !== req.userId) throw new NotFoundException();
+    if (!wallet || wallet.userId !== userId) throw new NotFoundException();
     return {
       publicId: wallet.publicId,
       address: wallet.address,
