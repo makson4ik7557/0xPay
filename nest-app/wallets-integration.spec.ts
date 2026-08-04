@@ -5,6 +5,7 @@ import {
 import { execSync } from 'node:child_process';
 import { PrismaService } from './src/prisma/prisma.service';
 import { WalletsService } from './src/wallets/wallets.service';
+import { cleanDatabase } from './src/test-utils/clean-database';
 
 describe('wallets integration', () => {
   let container: StartedPostgreSqlContainer;
@@ -26,6 +27,10 @@ describe('wallets integration', () => {
   afterAll(async () => {
     await prisma?.onModuleDestroy();
     await container?.stop();
+  });
+
+  beforeEach(async () => {
+    await cleanDatabase(prisma);
   });
 
   it('creates a wallet in the real database', async () => {
