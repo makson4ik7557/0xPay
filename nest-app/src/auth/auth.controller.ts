@@ -2,7 +2,7 @@ import { Body, Controller, Post, Get, HttpCode, UseGuards, Request } from '@nest
 import {AuthService} from './auth.service'
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
