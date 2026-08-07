@@ -3,16 +3,19 @@ import {AuthService} from './auth.service'
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import {RateLimitGuard} from './guards/rate-limit.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
+  @UseGuards(RateLimitGuard)
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.service.register(dto);
   }
 
+  @UseGuards(RateLimitGuard)
   @Post('login')
   @HttpCode(200)
   login(@Body() dto: LoginDto) {
@@ -22,7 +25,7 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  me(@Request() req){
+  me(@Request() req) {
     return req.user.userId;
   }
 }
