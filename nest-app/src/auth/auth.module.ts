@@ -5,10 +5,12 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './guards/jwt.strategy';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   imports: [
     PrismaModule,
+    RedisModule,
     JwtModule.registerAsync({
       imports: [
         ConfigModule,
