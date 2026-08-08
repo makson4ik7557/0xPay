@@ -13,7 +13,7 @@ import { cleanDatabase } from './src/test-utils/clean-database';
 describe('auth integration', () => {
   let container: StartedPostgreSqlContainer;
   let app: INestApplication;
-  let prisma: PrismaService
+  let prisma: PrismaService;
 
   beforeAll(async () => {
     container = await new PostgreSqlContainer('postgres:17').start();
