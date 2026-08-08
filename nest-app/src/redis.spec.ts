@@ -1,7 +1,7 @@
 import { RedisContainer, StartedRedisContainer } from '@testcontainers/redis';
 import Redis from 'ioredis';
 
-describe('redis testcontainer', () => {
+describe('redis test container', () => {
   let container: StartedRedisContainer;
   let redis: Redis;
 
