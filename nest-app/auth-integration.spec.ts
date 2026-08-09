@@ -9,6 +9,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { PrismaService } from './src/prisma/prisma.service';
 import { cleanDatabase } from './src/test-utils/clean-database';
+import {RateLimitGuard} from './src/auth/guards/rate-limit.guard';
 
 describe('auth integration', () => {
   let container: StartedPostgreSqlContainer;
@@ -22,7 +23,10 @@ describe('auth integration', () => {
       env: process.env,
       stdio: 'inherit'
     });
-    const moduleRef = await Test.createTestingModule({imports: [AppModule]}).compile();
+    const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideGuard(RateLimitGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     prisma = app.get(PrismaService);
