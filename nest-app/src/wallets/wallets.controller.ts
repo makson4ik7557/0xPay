@@ -2,26 +2,40 @@ import { Body, Request, Controller, Get, Post, UseGuards, Param } from '@nestjs/
 import { WalletsService } from './wallets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWalletDto } from './dto/create-wallet.dto';
+import { CreateDepositDto } from './dto/deposit.dto';
+import { LedgerService } from '../ledger/ledger.service';
 
 @Controller('wallets')
 export class WalletsController {
-  constructor(private readonly service: WalletsService) {}
+  constructor(
+    private readonly service: WalletsService,
+    private readonly ledger: LedgerService,
+  ) {}
+
   @Post()
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateWalletDto, @Request() req) {
     const userId = req.user.userId;
     return this.service.createWallet(dto, userId);
   }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   getAllWallets(@Request() req) {
     const userId = req.user.userId;
     return this.service.allUserWallets(userId);
   }
+
   @Get(':publicId')
   @UseGuards(JwtAuthGuard)
   getSpecificWallet(@Param('publicId') params, @Request() req) {
     const userId = req.user.userId;
-    return this.service.getWallet(params,userId);
+    return this.service.getWallet(params, userId);
+  }
+
+  @Post('/:publicId/deposits')
+  @UseGuards(JwtAuthGuard)
+  deposit(@Param('publicId') params, @Body() dto: CreateDepositDto) {
+    return this.ledger.deposit(params, dto.amount);
   }
 }

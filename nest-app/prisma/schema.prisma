@@ -50,13 +50,15 @@ model Account {
   id        Int           @id @default(autoincrement())
   createdAt DateTime      @default(now())
   type      AccountType
+  currency  String
+  network   String
   balance   BigInt        @default(0)
   walletId  Int?          @unique
   wallet    Wallet?       @relation(fields: [walletId], references: [id])
   entries   LedgerEntry[]
 }
 
-// checking movement details of the transaction , THE VIEW FROM USER/SYSTEM BALANCEC
+// checking movement details of the transaction , THE VIEW FROM USER/SYSTEM BALANCES
 // => give strict understantion about all balance history
 model LedgerEntry {
   id            Int         @id @default(autoincrement())
