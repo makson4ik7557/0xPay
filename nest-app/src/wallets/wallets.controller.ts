@@ -35,7 +35,8 @@ export class WalletsController {
 
   @Post('/:publicId/deposits')
   @UseGuards(JwtAuthGuard)
-  deposit(@Param('publicId') params, @Body() dto: CreateDepositDto) {
-    return this.ledger.deposit(params, dto.amount);
+  deposit(@Param('publicId') params, @Body() dto: CreateDepositDto , @Request() req) {
+    const userId = req.user.userId;
+    return this.ledger.deposit(params, dto.amount, userId);
   }
 }

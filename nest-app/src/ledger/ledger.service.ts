@@ -12,9 +12,12 @@ export class LedgerService implements OnModuleInit {
     await seedSystemAccounts(this.prisma);
   }
 
-  async deposit(publicId: string, amount: string) {
-    const wallet = await this.prisma.wallet.findUnique({
-      where: { publicId: publicId },
+  async deposit(publicId: string, amount: string, userId:number) {
+    const wallet = await this.prisma.wallet.findFirst({
+      where: {
+        publicId: publicId,
+        userId: userId
+      },
     });
     if (!wallet) throw new NotFoundException();
     const userAccount = await this.prisma.account.upsert({
