@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { CreateDepositDto } from './dto/deposit.dto';
 import { LedgerService } from '../ledger/ledger.service';
+import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 
 @Controller('wallets')
 export class WalletsController {
@@ -35,8 +36,23 @@ export class WalletsController {
 
   @Post('/:publicId/deposits')
   @UseGuards(JwtAuthGuard)
-  deposit(@Param('publicId') params, @Body() dto: CreateDepositDto , @Request() req) {
+  deposit(
+    @Param('publicId') params,
+    @Body() dto: CreateDepositDto,
+    @Request() req,
+  ) {
     const userId = req.user.userId;
     return this.ledger.deposit(params, dto.amount, userId);
+  }
+
+  @Post('/:publicId/withdrawal')
+  @UseGuards(JwtAuthGuard)
+  withdrawal(
+    @Param('publicId') params,
+    @Body() dto: CreateWithdrawalDto,
+    @Request() req,
+  ) {
+    const userId = req.user.userId;
+    return this.ledger.withdrawal(params, dto.amount, userId);
   }
 }
