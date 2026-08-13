@@ -10,7 +10,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AppModule } from './src/app.module';
 import { RateLimitGuard } from './src/auth/guards/rate-limit.guard';
-import {seedSystemAccounts} from './src/ledger/seed-system-accounts'
+import { seedSystemAccounts } from './src/ledger/seed-system-accounts';
 
 describe('deposit integration', () => {
   let container: StartedPostgreSqlContainer;
@@ -44,34 +44,7 @@ describe('deposit integration', () => {
     await seedSystemAccounts(prisma);
   });
 
-  it('creates a successful deposit', async () => {
-    await request(app.getHttpServer()).post('/auth/register').send({
-      email: 'test@email.com',
-      password: 'pass',
-    });
-
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'test@email.com',
-        password: 'pass',
-      });
-
-    const wallet = await request(app.getHttpServer()).post('/wallets').set('Authorization', `Bearer ${loginRes.body.token}`).send({
-      currency: 'BTC',
-      network: 'BITCOIN',
-    });
-
-    const dep = await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/deposits`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '67',
-      });
-    expect(dep.status).toBe(201);
-  });
-
-  it('sum of system and user accounts gives 0', async () => {
+  it('creates a successful withdrawal', async () => {
     await request(app.getHttpServer()).post('/auth/register').send({
       email: 'test@email.com',
       password: 'pass',
@@ -99,65 +72,77 @@ describe('deposit integration', () => {
         amount: '67',
       });
 
+    const withdrawal = await request(app.getHttpServer())
+      .post(`/wallets/${wallet.body.publicId}/withdrawal`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        amount: '66',
+      });
+
     const tx = await prisma.transaction.findFirst({
       where: {
-        type: 'deposit'
-      }
+        type: 'withdrawal',
+      },
     });
 
     const ledgerEntries = await prisma.ledgerEntry.findMany({
       where: {
-        transactionId: tx.id
-      }
+        transactionId: tx.id,
+      },
     });
-    const sum = ledgerEntries.reduce((acc,current) => acc + current.amount, 0n);
+    const ledgerSum = ledgerEntries.reduce(
+      (acc, current) => acc + current.amount,
+      0n,
+    );
+
+    const account = await prisma.account.findFirst({
+      where: { type: 'USER' },
+    });
+
+    const balance = await prisma.ledgerEntry.aggregate({
+      _sum: { amount: true },
+      where: { accountId: account.id },
+    });
+    expect(withdrawal.status).toBe(201);
+    expect(balance._sum.amount).toBe(1n);
     expect(ledgerEntries.length).toBe(2);
-    expect(sum).toBe(0n);
+    expect(ledgerSum).toBe(0n);
   });
 
-  it('deposit to user wallet with different token', async () => {
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'test1@email.com',
-        password: 'pass',
-      });
+  it('creates a bigger withdrawal than deposit', async () => {
+    await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'test@email.com',
+      password: 'pass',
+    });
 
-    await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({
-        email: 'test2@email.com',
-        password: 'pass',
-      });
-
-    const loginRes1 = await request(app.getHttpServer())
+    const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        email: 'test1@email.com',
+        email: 'test@email.com',
         password: 'pass',
       });
 
-    const loginRes2 = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'test2@email.com',
-        password: 'pass',
-      });
-
-    const user1Wallet = await request(app.getHttpServer())
+    const wallet = await request(app.getHttpServer())
       .post('/wallets')
-      .set('Authorization', `Bearer ${loginRes1.body.token}`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
       .send({
         currency: 'BTC',
         network: 'BITCOIN',
       });
 
-    const tx = await request(app.getHttpServer())
-      .post(`/wallets/${user1Wallet.body.publicId}/deposits`)
-      .set('Authorization', `Bearer ${loginRes2.body.token}`)
+    await request(app.getHttpServer())
+      .post(`/wallets/${wallet.body.publicId}/deposits`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
       .send({
-        amount: '67',
+        amount: '52',
       });
-    expect(tx.status).toBe(404);
+
+    const withdrawal = await request(app.getHttpServer())
+      .post(`/wallets/${wallet.body.publicId}/withdrawal`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        amount: '322',
+      });
+    expect(withdrawal.status).toBe(409);
   });
 });
