@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {NotFoundException} from '@nestjs/common';
+import {OnModuleInit} from '@nestjs/common';
+import {seedSystemAccounts} from './seed-system-accounts'
 
 @Injectable()
-export class LedgerService {
+export class LedgerService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    await seedSystemAccounts(this.prisma);
+  }
+
   async deposit(publicId: string, amount: string) {
     const wallet = await this.prisma.wallet.findUnique({
       where: { publicId: publicId },

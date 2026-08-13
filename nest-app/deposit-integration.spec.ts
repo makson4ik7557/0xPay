@@ -10,6 +10,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AppModule } from './src/app.module';
 import { RateLimitGuard } from './src/auth/guards/rate-limit.guard';
+import {seedSystemAccounts} from './src/ledger/seed-system-accounts'
 
 describe('deposit integration', () => {
   let container: StartedPostgreSqlContainer;
@@ -40,9 +41,7 @@ describe('deposit integration', () => {
 
   beforeEach(async () => {
     await cleanDatabase(prisma);
-    await prisma.account.create({
-      data: { type: 'SYSTEM', currency: 'BTC', network: 'BITCOIN' },
-    });
+    await seedSystemAccounts(prisma);
   });
 
   it('creates a successful deposit', async () => {
