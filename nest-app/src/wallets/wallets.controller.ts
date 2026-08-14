@@ -55,4 +55,11 @@ export class WalletsController {
     const userId = req.user.userId;
     return this.ledger.withdrawal(params, dto.amount, userId);
   }
+
+  @Get('/:publicId/balance')
+  @UseGuards(JwtAuthGuard)
+  getSpecificBalance(@Param('publicId') params, @Request() req) {
+    const userId = req.user.userId;
+    return this.ledger.getWalletBalance(params, userId);
+  }
 }

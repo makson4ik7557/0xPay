@@ -112,4 +112,24 @@ export class LedgerService implements OnModuleInit {
       });
     });
   }
+  async getWalletBalance(publicId:string, userId:number){
+    const wallet = await this.prisma.wallet.findFirst({
+      where: {
+        publicId: publicId,
+        userId: userId,
+      },
+    });
+    if (!wallet) throw new NotFoundException();
+
+    const userAccount = await this.prisma.account.findFirst({
+      where: { walletId: wallet.id },
+    });
+    if (!userAccount) return { balance: '0' };
+
+    const balance = await this.prisma.ledgerEntry.aggregate({
+      _sum: { amount: true },
+      where: { accountId: userAccount.id },
+    });
+    return { balance: (balance._sum.amount ?? 0n).toString() };
+  }
 }

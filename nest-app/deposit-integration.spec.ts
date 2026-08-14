@@ -160,4 +160,38 @@ describe('deposit integration', () => {
       });
     expect(tx.status).toBe(404);
   });
+
+  it('returns wallet balance', async () => {
+    await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'test@email.com',
+      password: 'pass',
+    });
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'test@email.com',
+        password: 'pass',
+      });
+
+    const wallet = await request(app.getHttpServer())
+      .post('/wallets')
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        currency: 'BTC',
+        network: 'BITCOIN',
+      });
+
+    await request(app.getHttpServer())
+      .post(`/wallets/${wallet.body.publicId}/deposits`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        amount: '67',
+      });
+
+    const balance = await request(app.getHttpServer())
+      .get(`/wallets/${wallet.body.publicId}/balance`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`);
+    expect(balance.body.balance).toBe('67');
+  });
 });
