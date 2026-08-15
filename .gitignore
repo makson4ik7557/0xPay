@@ -2,3 +2,5 @@ node_modules
 .idea
 .env
 /generated/prisma
+js-api.md
+algo.ts
