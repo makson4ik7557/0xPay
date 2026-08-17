@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import {RateLimitGuard} from './guards/rate-limit.guard';
+import {CurrentUserDecorator} from './current-user.decorator'
 
 @Controller('auth')
 export class AuthController {
@@ -25,8 +26,8 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
-  me(@Request() req) {
-    return req.user.userId;
+  me(@CurrentUserDecorator() userId:number) {
+    return this.service.getMe(userId);
   }
 }
 

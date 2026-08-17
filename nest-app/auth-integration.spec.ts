@@ -117,6 +117,6 @@ describe('auth integration', () => {
       .get('/auth/me')
       .set('Authorization', `Bearer ${loginRes.body.token}`);
     expect(res.status).toBe(200);
-    expect(res.text).toBeDefined();
+    expect(res.body.email).toBe('test@email.com');
   });
 })
