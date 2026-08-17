@@ -44,4 +44,11 @@ export class AuthService{
     const token = this.jwt.sign({sub: user.id});
     return {token}
   }
+
+  async getMe(userId:number) {
+    return this.prisma.user.findUnique({
+      where: {id: userId},
+      select: {id:true, email:true, createdAt:true}
+    });
+  }
 }
