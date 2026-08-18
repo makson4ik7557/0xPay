@@ -145,4 +145,53 @@ describe('deposit integration', () => {
       });
     expect(withdrawal.status).toBe(409);
   });
+
+  it('prevents concurrent overdraw', async () => {
+    await request(app.getHttpServer()).post('/auth/register').send({
+      email: 'test@email.com',
+      password: 'pass',
+    });
+
+    const loginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'test@email.com',
+        password: 'pass',
+      });
+
+    const wallet = await request(app.getHttpServer())
+      .post('/wallets')
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        currency: 'BTC',
+        network: 'BITCOIN',
+      });
+
+    await request(app.getHttpServer())
+      .post(`/wallets/${wallet.body.publicId}/deposits`)
+      .set('Authorization', `Bearer ${loginRes.body.token}`)
+      .send({
+        amount: '100',
+      });
+
+    const [res1, res2] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/wallets/${wallet.body.publicId}/withdrawal`)
+        .set('Authorization', `Bearer ${loginRes.body.token}`)
+        .send({ amount: '80' }),
+      request(app.getHttpServer())
+        .post(`/wallets/${wallet.body.publicId}/withdrawal`)
+        .set('Authorization', `Bearer ${loginRes.body.token}`)
+        .send({ amount: '80' }),
+    ]);
+    const statuses = [res1.status, res2.status].sort();
+    expect(statuses).toEqual([201, 409]);
+
+    const account = await prisma.account.findFirst({ where: { type: 'USER' } });
+    const balance = await prisma.ledgerEntry.aggregate({
+      _sum: { amount: true },
+      where: { accountId: account.id },
+    });
+    expect(balance._sum.amount).toBe(20n);
+  });
 });

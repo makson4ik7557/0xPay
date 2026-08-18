@@ -83,16 +83,16 @@ export class LedgerService implements OnModuleInit {
     });
     if (!systemAccount) throw new NotFoundException();
 
-      const balance = await this.prisma.ledgerEntry.aggregate({
-        _sum: {amount: true},
-        where: {
-        accountId: userAccount.id,
-        }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw `SELECT id FROM "Account" WHERE id = ${userAccount.id} FOR UPDATE`;
+      const balance = await tx.ledgerEntry.aggregate({
+        _sum: { amount: true },
+        where: { accountId: userAccount.id },
       });
       const availableBalance = balance._sum.amount ?? 0n;
-      if(BigInt(amount) > availableBalance) throw new ConflictException('Insufficient balance');
+      if (BigInt(amount) > availableBalance)
+        throw new ConflictException('Insufficient balance');
 
-    await this.prisma.$transaction(async (tx) => {
       const tx1 = await tx.transaction.create({
         data: { type: 'withdrawal', amount: BigInt(amount), walletId: wallet.id },
       });

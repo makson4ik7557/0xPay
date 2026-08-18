@@ -52,7 +52,6 @@ model Account {
   type      AccountType
   currency  String
   network   String
-  balance   BigInt        @default(0)
   walletId  Int?          @unique
   wallet    Wallet?       @relation(fields: [walletId], references: [id])
   entries   LedgerEntry[]
