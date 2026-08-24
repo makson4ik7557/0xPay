@@ -104,10 +104,10 @@ describe('deposit integration', () => {
         type: 'deposit'
       }
     });
-
+    expect(tx).not.toBeNull();
     const ledgerEntries = await prisma.ledgerEntry.findMany({
       where: {
-        transactionId: tx.id
+        transactionId: tx!.id
       }
     });
     const sum = ledgerEntries.reduce((acc,current) => acc + current.amount, 0n);
