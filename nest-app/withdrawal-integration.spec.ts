@@ -84,10 +84,10 @@ describe('deposit integration', () => {
         type: 'withdrawal',
       },
     });
-
+    expect(tx).not.toBeNull();
     const ledgerEntries = await prisma.ledgerEntry.findMany({
       where: {
-        transactionId: tx.id,
+        transactionId: tx!.id,
       },
     });
     const ledgerSum = ledgerEntries.reduce(
@@ -98,10 +98,10 @@ describe('deposit integration', () => {
     const account = await prisma.account.findFirst({
       where: { type: 'USER' },
     });
-
+    expect(account).not.toBeNull();
     const balance = await prisma.ledgerEntry.aggregate({
       _sum: { amount: true },
-      where: { accountId: account.id },
+      where: { accountId: account!.id },
     });
     expect(withdrawal.status).toBe(201);
     expect(balance._sum.amount).toBe(1n);
@@ -188,9 +188,10 @@ describe('deposit integration', () => {
     expect(statuses).toEqual([201, 409]);
 
     const account = await prisma.account.findFirst({ where: { type: 'USER' } });
+    expect(account).not.toBeNull();
     const balance = await prisma.ledgerEntry.aggregate({
       _sum: { amount: true },
-      where: { accountId: account.id },
+      where: { accountId: account!.id },
     });
     expect(balance._sum.amount).toBe(20n);
   });
