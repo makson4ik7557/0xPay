@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
   wallets      Wallet[]
+  invoices     Invoice[]
 }
 
 model Wallet {
@@ -69,6 +70,23 @@ model LedgerEntry {
   transaction   Transaction @relation(fields: [transactionId], references: [id])
 }
 
+model Invoice {
+  id        Int           @id @default(autoincrement())
+  address   String
+  amount    BigInt
+  currency  String
+  network   String
+  status    InvoiceStatus @default(PENDING)
+  expiresAt DateTime
+  txHash    String?       @unique
+  createdAt DateTime      @default(now())
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id])
+
+  @@index([status, expiresAt])
+  @@index([userId])
+}
+
 enum Type {
   deposit
   withdrawal
@@ -82,4 +100,11 @@ enum PossibleStatus {
 enum AccountType {
   USER
   SYSTEM
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  EXPIRED
+  EXPIRED_PAID
 }

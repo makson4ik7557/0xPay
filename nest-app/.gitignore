@@ -66,3 +66,7 @@ skills-lock.json
 requests.http
 TECH_DEBT.md
 docs
+
+CLAUDE.md
+# Claude Code personal settings
+.claude/settings.local.json
