@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Read(//Users/maksymko/.codex/**)",
-      "Read(//Users/maksymko/.gemini/**)"
-    ]
-  }
-}
