@@ -18,6 +18,7 @@
     "test:cov": "vitest run --coverage"
   },
   "dependencies": {
+    "@nestjs/bullmq": "^12.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -26,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/adapter-pg": "^7.9.0",
     "argon2": "^0.45.1",
+    "bullmq": "^6.3.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "ioredis": "^6.0.0",

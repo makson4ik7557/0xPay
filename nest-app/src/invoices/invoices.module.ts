@@ -1,11 +1,41 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { BullModule, InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { InvoicesController } from './invoices.controller';
 import { InvoicesService } from './invoices.service';
+import { InvoiceExpiryService } from './invoice-expiry.service';
+import { InvoiceExpiryProcessor } from './invoice-expiry.processor';
+import { WatchlistNotifier } from './watchlist.notifier';
 import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, BullModule.registerQueue({ name: 'invoice-expiry' })],
   controllers: [InvoicesController],
-  providers: [InvoicesService],
+  providers: [
+    InvoicesService,
+    InvoiceExpiryService,
+    InvoiceExpiryProcessor,
+    WatchlistNotifier,
+  ],
 })
-export class InvoicesModule {}
+export class InvoicesModule implements OnModuleInit {
+  constructor(
+    @InjectQueue('invoice-expiry') private readonly queue: Queue,
+    private readonly config: ConfigService,
+  ) {}
+
+  async onModuleInit() {
+    const every = Number(
+      this.config.getOrThrow<string>('INVOICE_EXPIRY_SWEEP_MS'),
+    );
+    await this.queue.upsertJobScheduler(
+      'invoice-expiry-repeat',
+      { every },
+      {
+        name: 'sweep',
+        opts: { removeOnComplete: true, removeOnFail: true },
+      },
+    );
+  }
+}
