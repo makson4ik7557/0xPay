@@ -27,6 +27,7 @@ model Wallet {
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
   account      Account?
+  invoices     Invoice[]
 
   @@index([userId])
 }
@@ -72,7 +73,8 @@ model LedgerEntry {
 
 model Invoice {
   id        Int           @id @default(autoincrement())
-  address   String
+  walletId  Int
+  address   String        @unique
   amount    BigInt
   currency  String
   network   String
@@ -82,6 +84,7 @@ model Invoice {
   createdAt DateTime      @default(now())
   userId    Int
   user      User          @relation(fields: [userId], references: [id])
+  wallet    Wallet        @relation(fields: [walletId], references: [id])
 
   @@index([status, expiresAt])
   @@index([userId])

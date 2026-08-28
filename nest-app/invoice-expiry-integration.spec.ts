@@ -42,9 +42,18 @@ describe('invoice expiry integration', () => {
 
   it('expires a PENDING invoice past expiresAt and notifies the watchlist', async () => {
     const user = await createUser();
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: user.id,
+        address: 'PLACEHOLDER_ADDRESS',
+        currency: 'ETH',
+        network: 'SEPOLIA',
+      },
+    });
     const invoice = await prisma.invoice.create({
       data: {
         address: '0xpast',
+        walletId: wallet.id,
         amount: 100n,
         currency: 'ETH',
         network: 'SEPOLIA',
@@ -67,9 +76,18 @@ describe('invoice expiry integration', () => {
 
   it('leaves a not-yet-expired PENDING invoice untouched', async () => {
     const user = await createUser('future@email.com');
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: user.id,
+        address: 'PLACEHOLDER_ADDRESS',
+        currency: 'ETH',
+        network: 'SEPOLIA',
+      },
+    });
     const invoice = await prisma.invoice.create({
       data: {
         address: '0xfuture',
+        walletId: wallet.id,
         amount: 100n,
         currency: 'ETH',
         network: 'SEPOLIA',

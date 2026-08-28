@@ -43,10 +43,18 @@ describe('invoices integration', () => {
     const user = await prisma.user.create({
       data: { email: 'test@email.com', passwordHash: 'hash' },
     });
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: user.id,
+        address: 'PLACEHOLDER_ADDRESS',
+        currency: 'ETH',
+        network: 'SEPOLIA',
+      },
+    });
 
     const before = Date.now();
     const invoice = await invoicesService.createInvoice(
-      { amount: '1000', currency: 'ETH', network: 'SEPOLIA' },
+      { walletPublicId: wallet.publicId, amount: '1000' },
       user.id,
     );
     const after = Date.now();
@@ -63,9 +71,17 @@ describe('invoices integration', () => {
     const user = await prisma.user.create({
       data: { email: 'owner@email.com', passwordHash: 'hash' },
     });
+    const wallet = await prisma.wallet.create({
+      data: {
+        userId: user.id,
+        address: 'PLACEHOLDER_ADDRESS',
+        currency: 'ETH',
+        network: 'SEPOLIA',
+      },
+    });
 
     const invoice = await invoicesService.createInvoice(
-      { amount: '42', currency: 'ETH', network: 'SEPOLIA' },
+      { walletPublicId: wallet.publicId, amount: '42' },
       user.id,
     );
 

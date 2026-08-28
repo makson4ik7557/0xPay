@@ -4,6 +4,7 @@ export const assetNetworks = {
     { name: 'ARBITRUM', decimals: 18 },
     { name: 'OPTIMISM', decimals: 18 },
     { name: 'ERC-20', decimals: 18 },
+    { name: 'SEPOLIA', decimals: 18 },
   ],
   USDT: [
     { name: 'ERC-20', decimals: 6 },

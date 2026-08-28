@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException, ConflictException } from '@nestjs/common';
-import {OnModuleInit} from '@nestjs/common';
-import {seedSystemAccounts} from './seed-system-accounts'
+import { OnModuleInit } from '@nestjs/common';
+import { seedSystemAccounts } from './seed-system-accounts';
 
 @Injectable()
 export class LedgerService implements OnModuleInit {
@@ -12,11 +12,11 @@ export class LedgerService implements OnModuleInit {
     await seedSystemAccounts(this.prisma);
   }
 
-  async deposit(publicId: string, amount: string, userId:number) {
+  async deposit(publicId: string, amount: string, userId: number) {
     const wallet = await this.prisma.wallet.findFirst({
       where: {
         publicId: publicId,
-        userId: userId
+        userId: userId,
       },
     });
     if (!wallet) throw new NotFoundException();
@@ -60,18 +60,18 @@ export class LedgerService implements OnModuleInit {
     });
   }
 
-  async withdrawal(publicId:string,amount:string, userId:number){
+  async withdrawal(publicId: string, amount: string, userId: number) {
     const wallet = await this.prisma.wallet.findFirst({
       where: {
         publicId: publicId,
         userId: userId,
-      }
+      },
     });
     if (!wallet) throw new NotFoundException();
     const userAccount = await this.prisma.account.findUnique({
       where: {
-        walletId: wallet.id
-      }
+        walletId: wallet.id,
+      },
     });
     if (!userAccount) throw new ConflictException();
     const systemAccount = await this.prisma.account.findFirst({
@@ -84,7 +84,7 @@ export class LedgerService implements OnModuleInit {
     if (!systemAccount) throw new NotFoundException();
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw `SELECT id FROM "Account" WHERE id = ${userAccount.id} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Account" WHERE id = ${userAccount.id} FOR UPDATE`;
       const balance = await tx.ledgerEntry.aggregate({
         _sum: { amount: true },
         where: { accountId: userAccount.id },
@@ -94,7 +94,11 @@ export class LedgerService implements OnModuleInit {
         throw new ConflictException('Insufficient balance');
 
       const tx1 = await tx.transaction.create({
-        data: { type: 'withdrawal', amount: BigInt(amount), walletId: wallet.id },
+        data: {
+          type: 'withdrawal',
+          amount: BigInt(amount),
+          walletId: wallet.id,
+        },
       });
       await tx.ledgerEntry.create({
         data: {
@@ -112,7 +116,7 @@ export class LedgerService implements OnModuleInit {
       });
     });
   }
-  async getWalletBalance(publicId:string, userId:number){
+  async getWalletBalance(publicId: string, userId: number) {
     const wallet = await this.prisma.wallet.findFirst({
       where: {
         publicId: publicId,
