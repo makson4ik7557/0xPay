@@ -5,13 +5,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
-import {assetNetworks} from './wallets.constants'
+import { assetNetworks } from './wallets.constants';
 
 @Injectable()
 export class WalletsService {
   constructor(private readonly prisma: PrismaService) {}
   async createWallet(dto: CreateWalletDto, userId: number) {
-    if (!assetNetworks[dto.currency].map((n: {name:string}) => n.name).includes(dto.network)) {
+    if (
+      !assetNetworks[dto.currency]
+        .map((n: { name: string }) => n.name)
+        .includes(dto.network)
+    ) {
       throw new BadRequestException('Invalid chain or network');
     }
     const newWallet = await this.prisma.wallet.create({
@@ -44,9 +48,11 @@ export class WalletsService {
     }));
   }
 
-  async getWallet(params: string, userId:number) {
-    const wallet = await this.prisma.wallet.findUnique({ where: { publicId: params } });
-    if (!wallet || wallet.userId !== userId) throw new NotFoundException();
+  async getWallet(params: string, userId: number) {
+    const wallet = await this.prisma.wallet.findFirst({
+      where: { publicId: params, userId },
+    });
+    if (!wallet) throw new NotFoundException();
     return {
       publicId: wallet.publicId,
       address: wallet.address,
