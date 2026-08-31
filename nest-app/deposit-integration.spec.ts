@@ -17,30 +17,18 @@ describe('deposit integration', () => {
   let prisma: PrismaService;
   let app: INestApplication;
 
-  async function setupUserAndWallet(email = 'test@email.com') {
+  async function setupUser(email = 'test@email.com') {
     await request(app.getHttpServer()).post('/auth/register').send({
       email,
       password: 'pass',
     });
 
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email,
-        password: 'pass',
-      });
+    const loginRes = await request(app.getHttpServer()).post('/auth/login').send({
+      email,
+      password: 'pass',
+    });
 
-    const token = loginRes.body.token;
-
-    const wallet = await request(app.getHttpServer())
-      .post('/wallets')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        currency: 'BTC',
-        network: 'BITCOIN',
-      });
-
-    return { token, walletId: wallet.body.publicId };
+    return { token: loginRes.body.token as string };
   }
 
   beforeAll(async () => {
@@ -71,23 +59,23 @@ describe('deposit integration', () => {
   });
 
   it('creates a successful deposit', async () => {
-    const { token, walletId } = await setupUserAndWallet();
+    const { token } = await setupUser();
 
     const dep = await request(app.getHttpServer())
-      .post(`/wallets/${walletId}/deposits`)
+      .post('/wallets/deposits')
       .set('Authorization', `Bearer ${token}`)
-      .send({ amount: '67' });
+      .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
     expect(dep.status).toBe(201);
   });
 
   it('sum of system and user accounts gives 0', async () => {
-    const { token, walletId } = await setupUserAndWallet();
+    const { token } = await setupUser();
 
     await request(app.getHttpServer())
-      .post(`/wallets/${walletId}/deposits`)
+      .post('/wallets/deposits')
       .set('Authorization', `Bearer ${token}`)
-      .send({ amount: '67' });
+      .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
     const tx = await prisma.transaction.findFirst({
       where: { type: 'deposit' },
@@ -106,28 +94,32 @@ describe('deposit integration', () => {
     expect(sum).toBe(0n);
   });
 
-  it('deposit to user wallet with different token', async () => {
-    const user1 = await setupUserAndWallet('test1@email.com');
-    const user2 = await setupUserAndWallet('test2@email.com');
-
-    const tx = await request(app.getHttpServer())
-      .post(`/wallets/${user1.walletId}/deposits`)
-      .set('Authorization', `Bearer ${user2.token}`)
-      .send({ amount: '67' });
-
-    expect(tx.status).toBe(404);
-  });
-
-  it('returns wallet balance', async () => {
-    const { token, walletId } = await setupUserAndWallet();
+  it('keeps balances isolated per user', async () => {
+    const a = await setupUser('a@email.com');
+    const b = await setupUser('b@email.com');
 
     await request(app.getHttpServer())
-      .post(`/wallets/${walletId}/deposits`)
+      .post('/wallets/deposits')
+      .set('Authorization', `Bearer ${a.token}`)
+      .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
+
+    const balanceB = await request(app.getHttpServer())
+      .get('/wallets/balance?currency=BTC&network=BITCOIN')
+      .set('Authorization', `Bearer ${b.token}`);
+
+    expect(balanceB.body.balance).toBe('0');
+  });
+
+  it('returns the deposited balance', async () => {
+    const { token } = await setupUser();
+
+    await request(app.getHttpServer())
+      .post('/wallets/deposits')
       .set('Authorization', `Bearer ${token}`)
-      .send({ amount: '67' });
+      .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
     const balance = await request(app.getHttpServer())
-      .get(`/wallets/${walletId}/balance`)
+      .get('/wallets/balance?currency=BTC&network=BITCOIN')
       .set('Authorization', `Bearer ${token}`);
 
     expect(balance.body.balance).toBe('67');

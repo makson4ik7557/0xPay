@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, UseGuards, Param } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  UseGuards,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { WalletsService } from './wallets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateWalletDto } from './dto/create-wallet.dto';
@@ -26,6 +34,39 @@ export class WalletsController {
     return this.service.allUserWallets(userId);
   }
 
+  @Post('deposits')
+  @UseGuards(JwtAuthGuard)
+  deposit(
+    @Body() dto: CreateDepositDto,
+    @CurrentUserDecorator() userId: number,
+  ) {
+    return this.ledger.deposit(dto.currency, dto.network, dto.amount, userId);
+  }
+
+  @Post('withdrawals')
+  @UseGuards(JwtAuthGuard)
+  withdrawal(
+    @Body() dto: CreateWithdrawalDto,
+    @CurrentUserDecorator() userId: number,
+  ) {
+    return this.ledger.withdrawal(
+      dto.currency,
+      dto.network,
+      dto.amount,
+      userId,
+    );
+  }
+
+  @Get('balance')
+  @UseGuards(JwtAuthGuard)
+  getSpecificBalance(
+    @Query('currency') currency: string,
+    @Query('network') network: string,
+    @CurrentUserDecorator() userId: number,
+  ) {
+    return this.ledger.getBalance(currency, network, userId);
+  }
+
   @Get(':publicId')
   @UseGuards(JwtAuthGuard)
   getSpecificWallet(
@@ -33,34 +74,5 @@ export class WalletsController {
     @CurrentUserDecorator() userId: number,
   ) {
     return this.service.getWallet(params, userId);
-  }
-
-  @Post('/:publicId/deposits')
-  @UseGuards(JwtAuthGuard)
-  deposit(
-    @Param('publicId') params: string,
-    @Body() dto: CreateDepositDto,
-    @CurrentUserDecorator() userId: number,
-  ) {
-    return this.ledger.deposit(params, dto.amount, userId);
-  }
-
-  @Post('/:publicId/withdrawal')
-  @UseGuards(JwtAuthGuard)
-  withdrawal(
-    @Param('publicId') params: string,
-    @Body() dto: CreateWithdrawalDto,
-    @CurrentUserDecorator() userId: number,
-  ) {
-    return this.ledger.withdrawal(params, dto.amount, userId);
-  }
-
-  @Get('/:publicId/balance')
-  @UseGuards(JwtAuthGuard)
-  getSpecificBalance(
-    @Param('publicId') params: string,
-    @CurrentUserDecorator() userId: number,
-  ) {
-    return this.ledger.getWalletBalance(params, userId);
   }
 }

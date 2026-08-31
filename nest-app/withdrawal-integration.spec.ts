@@ -12,10 +12,38 @@ import { AppModule } from './src/app.module';
 import { RateLimitGuard } from './src/auth/guards/rate-limit.guard';
 import { seedSystemAccounts } from './src/ledger/seed-system-accounts';
 
-describe('deposit integration', () => {
+describe('withdrawal integration', () => {
   let container: StartedPostgreSqlContainer;
   let prisma: PrismaService;
   let app: INestApplication;
+
+  async function setupUser(email = 'test@email.com') {
+    await request(app.getHttpServer()).post('/auth/register').send({
+      email,
+      password: 'pass',
+    });
+
+    const loginRes = await request(app.getHttpServer()).post('/auth/login').send({
+      email,
+      password: 'pass',
+    });
+
+    return { token: loginRes.body.token as string };
+  }
+
+  function deposit(token: string, amount: string) {
+    return request(app.getHttpServer())
+      .post('/wallets/deposits')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currency: 'BTC', network: 'BITCOIN', amount });
+  }
+
+  function withdraw(token: string, amount: string) {
+    return request(app.getHttpServer())
+      .post('/wallets/withdrawals')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currency: 'BTC', network: 'BITCOIN', amount });
+  }
 
   beforeAll(async () => {
     container = await new PostgreSqlContainer('postgres:17').start();
@@ -45,50 +73,16 @@ describe('deposit integration', () => {
   });
 
   it('creates a successful withdrawal', async () => {
-    await request(app.getHttpServer()).post('/auth/register').send({
-      email: 'test@email.com',
-      password: 'pass',
-    });
-
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'test@email.com',
-        password: 'pass',
-      });
-
-    const wallet = await request(app.getHttpServer())
-      .post('/wallets')
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        currency: 'BTC',
-        network: 'BITCOIN',
-      });
-
-    await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/deposits`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '67',
-      });
-
-    const withdrawal = await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/withdrawal`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '66',
-      });
+    const { token } = await setupUser();
+    await deposit(token, '67');
+    const withdrawal = await withdraw(token, '66');
 
     const tx = await prisma.transaction.findFirst({
-      where: {
-        type: 'withdrawal',
-      },
+      where: { type: 'withdrawal' },
     });
     expect(tx).not.toBeNull();
     const ledgerEntries = await prisma.ledgerEntry.findMany({
-      where: {
-        transactionId: tx!.id,
-      },
+      where: { transactionId: tx!.id },
     });
     const ledgerSum = ledgerEntries.reduce(
       (acc, current) => acc + current.amount,
@@ -109,80 +103,20 @@ describe('deposit integration', () => {
     expect(ledgerSum).toBe(0n);
   });
 
-  it('creates a bigger withdrawal than deposit', async () => {
-    await request(app.getHttpServer()).post('/auth/register').send({
-      email: 'test@email.com',
-      password: 'pass',
-    });
-
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'test@email.com',
-        password: 'pass',
-      });
-
-    const wallet = await request(app.getHttpServer())
-      .post('/wallets')
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        currency: 'BTC',
-        network: 'BITCOIN',
-      });
-
-    await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/deposits`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '52',
-      });
-
-    const withdrawal = await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/withdrawal`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '322',
-      });
+  it('rejects a withdrawal bigger than the balance', async () => {
+    const { token } = await setupUser();
+    await deposit(token, '52');
+    const withdrawal = await withdraw(token, '322');
     expect(withdrawal.status).toBe(409);
   });
 
   it('prevents concurrent overdraw', async () => {
-    await request(app.getHttpServer()).post('/auth/register').send({
-      email: 'test@email.com',
-      password: 'pass',
-    });
-
-    const loginRes = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({
-        email: 'test@email.com',
-        password: 'pass',
-      });
-
-    const wallet = await request(app.getHttpServer())
-      .post('/wallets')
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        currency: 'BTC',
-        network: 'BITCOIN',
-      });
-
-    await request(app.getHttpServer())
-      .post(`/wallets/${wallet.body.publicId}/deposits`)
-      .set('Authorization', `Bearer ${loginRes.body.token}`)
-      .send({
-        amount: '100',
-      });
+    const { token } = await setupUser();
+    await deposit(token, '100');
 
     const [res1, res2] = await Promise.all([
-      request(app.getHttpServer())
-        .post(`/wallets/${wallet.body.publicId}/withdrawal`)
-        .set('Authorization', `Bearer ${loginRes.body.token}`)
-        .send({ amount: '80' }),
-      request(app.getHttpServer())
-        .post(`/wallets/${wallet.body.publicId}/withdrawal`)
-        .set('Authorization', `Bearer ${loginRes.body.token}`)
-        .send({ amount: '80' }),
+      withdraw(token, '80'),
+      withdraw(token, '80'),
     ]);
     const statuses = [res1.status, res2.status].sort();
     expect(statuses).toEqual([201, 409]);

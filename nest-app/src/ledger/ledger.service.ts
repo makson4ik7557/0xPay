@@ -12,36 +12,40 @@ export class LedgerService implements OnModuleInit {
     await seedSystemAccounts(this.prisma);
   }
 
-  async deposit(publicId: string, amount: string, userId: number) {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        publicId: publicId,
-        userId: userId,
-      },
-    });
-    if (!wallet) throw new NotFoundException();
+  async deposit(
+    currency: string,
+    network: string,
+    amount: string,
+    userId: number,
+  ) {
     const userAccount = await this.prisma.account.upsert({
-      where: { walletId: wallet.id },
+      where: {
+        userId_currency_network: {
+          userId: userId,
+          currency: currency,
+          network: network,
+        },
+      },
       create: {
         type: 'USER',
-        walletId: wallet.id,
-        currency: wallet.currency,
-        network: wallet.network,
+        userId: userId,
+        currency: currency,
+        network: network,
       },
       update: {},
     });
     const systemAccount = await this.prisma.account.findFirst({
       where: {
         type: 'SYSTEM',
-        currency: wallet.currency,
-        network: wallet.network,
+        currency: currency,
+        network: network,
       },
     });
     if (!systemAccount) throw new NotFoundException();
 
     await this.prisma.$transaction(async (tx) => {
       const tx1 = await tx.transaction.create({
-        data: { type: 'deposit', amount: BigInt(amount), walletId: wallet.id },
+        data: { type: 'deposit', amount: BigInt(amount), userId },
       });
       await tx.ledgerEntry.create({
         data: {
@@ -60,25 +64,27 @@ export class LedgerService implements OnModuleInit {
     });
   }
 
-  async withdrawal(publicId: string, amount: string, userId: number) {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        publicId: publicId,
-        userId: userId,
-      },
-    });
-    if (!wallet) throw new NotFoundException();
+  async withdrawal(
+    currency: string,
+    network: string,
+    amount: string,
+    userId: number,
+  ) {
     const userAccount = await this.prisma.account.findUnique({
       where: {
-        walletId: wallet.id,
+        userId_currency_network: {
+          userId: userId,
+          currency: currency,
+          network: network,
+        },
       },
     });
     if (!userAccount) throw new ConflictException();
     const systemAccount = await this.prisma.account.findFirst({
       where: {
         type: 'SYSTEM',
-        currency: wallet.currency,
-        network: wallet.network,
+        currency: currency,
+        network: network,
       },
     });
     if (!systemAccount) throw new NotFoundException();
@@ -97,7 +103,7 @@ export class LedgerService implements OnModuleInit {
         data: {
           type: 'withdrawal',
           amount: BigInt(amount),
-          walletId: wallet.id,
+          userId,
         },
       });
       await tx.ledgerEntry.create({
@@ -116,17 +122,13 @@ export class LedgerService implements OnModuleInit {
       });
     });
   }
-  async getWalletBalance(publicId: string, userId: number) {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        publicId: publicId,
-        userId: userId,
-      },
-    });
-    if (!wallet) throw new NotFoundException();
-
+  async getBalance(currency: string, network: string, userId: number) {
     const userAccount = await this.prisma.account.findFirst({
-      where: { walletId: wallet.id },
+      where: {
+        userId: userId,
+        currency: currency,
+        network: network,
+      },
     });
     if (!userAccount) return { balance: '0' };
 

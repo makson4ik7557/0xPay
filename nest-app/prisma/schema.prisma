@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
   passwordHash String
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime      @default(now())
   wallets      Wallet[]
   invoices     Invoice[]
+  accounts     Account[]
+  transactions Transaction[]
 }
 
 model Wallet {
@@ -26,7 +28,6 @@ model Wallet {
   userId       Int
   user         User          @relation(fields: [userId], references: [id])
   transactions Transaction[]
-  account      Account?
   invoices     Invoice[]
 
   @@index([userId])
@@ -41,11 +42,13 @@ model Transaction {
   amount          BigInt
   createdAt       DateTime       @default(now())
   status          PossibleStatus @default(pending)
-  walletId        Int
-  wallet          Wallet         @relation(fields: [walletId], references: [id])
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id])
   entries         LedgerEntry[]
+  wallet          Wallet?        @relation(fields: [walletId], references: [id])
+  walletId        Int?
 
-  @@index([walletId])
+  @@index([userId])
 }
 
 model Account {
@@ -54,9 +57,11 @@ model Account {
   type      AccountType
   currency  String
   network   String
-  walletId  Int?          @unique
-  wallet    Wallet?       @relation(fields: [walletId], references: [id])
+  userId    Int?
+  user      User?         @relation(fields: [userId], references: [id])
   entries   LedgerEntry[]
+
+  @@unique([userId, currency, network])
 }
 
 // checking movement details of the transaction , THE VIEW FROM USER/SYSTEM BALANCES
