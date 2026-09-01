@@ -62,7 +62,7 @@ describe('deposit integration', () => {
     const { token } = await setupUser();
 
     const dep = await request(app.getHttpServer())
-      .post('/wallets/deposits')
+      .post('/deposits')
       .set('Authorization', `Bearer ${token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
@@ -73,7 +73,7 @@ describe('deposit integration', () => {
     const { token } = await setupUser();
 
     await request(app.getHttpServer())
-      .post('/wallets/deposits')
+      .post('/deposits')
       .set('Authorization', `Bearer ${token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
@@ -99,12 +99,12 @@ describe('deposit integration', () => {
     const b = await setupUser('b@email.com');
 
     await request(app.getHttpServer())
-      .post('/wallets/deposits')
+      .post('/deposits')
       .set('Authorization', `Bearer ${a.token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
     const balanceB = await request(app.getHttpServer())
-      .get('/wallets/balance?currency=BTC&network=BITCOIN')
+      .get('/balance?currency=BTC&network=BITCOIN')
       .set('Authorization', `Bearer ${b.token}`);
 
     expect(balanceB.body.balance).toBe('0');
@@ -114,12 +114,12 @@ describe('deposit integration', () => {
     const { token } = await setupUser();
 
     await request(app.getHttpServer())
-      .post('/wallets/deposits')
+      .post('/deposits')
       .set('Authorization', `Bearer ${token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount: '67' });
 
     const balance = await request(app.getHttpServer())
-      .get('/wallets/balance?currency=BTC&network=BITCOIN')
+      .get('/balance?currency=BTC&network=BITCOIN')
       .set('Authorization', `Bearer ${token}`);
 
     expect(balance.body.balance).toBe('67');

@@ -12,24 +12,9 @@ model User {
   email        String        @unique
   passwordHash String
   createdAt    DateTime      @default(now())
-  wallets      Wallet[]
   invoices     Invoice[]
   accounts     Account[]
   transactions Transaction[]
-}
-
-model Wallet {
-  publicId     String        @unique @default(uuid())
-  id           Int           @id @default(autoincrement())
-  address      String
-  currency     String
-  network      String
-  createdAt    DateTime      @default(now())
-  userId       Int
-  user         User          @relation(fields: [userId], references: [id])
-  transactions Transaction[]
-
-  @@index([userId])
 }
 
 model Transaction {
@@ -44,8 +29,6 @@ model Transaction {
   userId          Int
   user            User           @relation(fields: [userId], references: [id])
   entries         LedgerEntry[]
-  wallet          Wallet?        @relation(fields: [walletId], references: [id])
-  walletId        Int?
 
   @@index([userId])
 }

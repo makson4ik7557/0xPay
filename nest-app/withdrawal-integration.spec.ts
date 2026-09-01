@@ -33,14 +33,14 @@ describe('withdrawal integration', () => {
 
   function deposit(token: string, amount: string) {
     return request(app.getHttpServer())
-      .post('/wallets/deposits')
+      .post('/deposits')
       .set('Authorization', `Bearer ${token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount });
   }
 
   function withdraw(token: string, amount: string) {
     return request(app.getHttpServer())
-      .post('/wallets/withdrawals')
+      .post('/withdrawals')
       .set('Authorization', `Bearer ${token}`)
       .send({ currency: 'BTC', network: 'BITCOIN', amount });
   }

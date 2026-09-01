@@ -1,7 +1,7 @@
 import { IsIn, IsNumberString, IsString } from 'class-validator';
-import { validCurrencies, validNetworks } from '../wallets.constants';
+import { validCurrencies, validNetworks } from '../../wallets/wallets.constants';
 
-export class CreateDepositDto {
+export class CreateWithdrawalDto {
   @IsString()
   @IsIn(validCurrencies)
   currency: string;
