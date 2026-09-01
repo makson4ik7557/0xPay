@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -20,8 +20,6 @@ export class InvoicesService {
   ) {}
 
   async createInvoice(dto: CreateInvoiceDto, userId: number) {
-    const wallet = await this.prisma.wallet.findFirst({where: { publicId: dto.walletPublicId , userId: userId}});
-    if (!wallet) throw new NotFoundException();
     const ttlSeconds = Number(
       this.config.getOrThrow<string>('INVOICE_TTL_SECONDS'),
     );
@@ -31,12 +29,11 @@ export class InvoicesService {
     const invoice = await this.prisma.invoice.create({
       data: {
         address,
-        walletId: wallet.id,
+        userId: userId,
         amount: BigInt(dto.amount),
-        currency: wallet.currency,
-        network: wallet.network,
+        currency: dto.currency,
+        network: dto.network,
         expiresAt,
-        userId,
       },
     });
 

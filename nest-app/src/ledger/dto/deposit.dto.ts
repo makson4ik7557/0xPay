@@ -4,7 +4,7 @@ import {
   validNetworks,
 } from '../../wallets/wallets.constants';
 
-export class CreateInvoiceDto {
+export class CreateDepositDto {
   @IsString()
   @IsIn(validCurrencies)
   currency: string;

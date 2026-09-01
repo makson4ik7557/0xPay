@@ -8,28 +8,13 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  wallets      Wallet[]
-  invoices     Invoice[]
-}
-
-model Wallet {
-  publicId     String        @unique @default(uuid())
   id           Int           @id @default(autoincrement())
-  address      String
-  currency     String
-  network      String
+  email        String        @unique
+  passwordHash String
   createdAt    DateTime      @default(now())
-  userId       Int
-  user         User          @relation(fields: [userId], references: [id])
-  transactions Transaction[]
-  account      Account?
   invoices     Invoice[]
-
-  @@index([userId])
+  accounts     Account[]
+  transactions Transaction[]
 }
 
 model Transaction {
@@ -41,11 +26,11 @@ model Transaction {
   amount          BigInt
   createdAt       DateTime       @default(now())
   status          PossibleStatus @default(pending)
-  walletId        Int
-  wallet          Wallet         @relation(fields: [walletId], references: [id])
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id])
   entries         LedgerEntry[]
 
-  @@index([walletId])
+  @@index([userId])
 }
 
 model Account {
@@ -54,9 +39,11 @@ model Account {
   type      AccountType
   currency  String
   network   String
-  walletId  Int?          @unique
-  wallet    Wallet?       @relation(fields: [walletId], references: [id])
+  userId    Int?
+  user      User?         @relation(fields: [userId], references: [id])
   entries   LedgerEntry[]
+
+  @@unique([userId, currency, network])
 }
 
 // checking movement details of the transaction , THE VIEW FROM USER/SYSTEM BALANCES
@@ -73,7 +60,6 @@ model LedgerEntry {
 
 model Invoice {
   id        Int           @id @default(autoincrement())
-  walletId  Int
   address   String        @unique
   amount    BigInt
   currency  String
@@ -84,7 +70,6 @@ model Invoice {
   createdAt DateTime      @default(now())
   userId    Int
   user      User          @relation(fields: [userId], references: [id])
-  wallet    Wallet        @relation(fields: [walletId], references: [id])
 
   @@index([status, expiresAt])
   @@index([userId])

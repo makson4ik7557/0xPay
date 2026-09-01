@@ -2,7 +2,7 @@ import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
 } from '@testcontainers/postgresql';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 import { Test } from '@nestjs/testing';
 import { AppModule } from './src/app.module';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -78,8 +78,9 @@ describe('auth integration', () => {
         email: 'test@email.com',
         password: 'pass',
       });
+    const body = loginRes.body as { token?: string };
     expect(loginRes.status).toBe(200);
-    expect(loginRes.body.token).toBeDefined();
+    expect(body.token).toBeDefined();
   });
 
   it('returns 401 with wrong password', async () => {
@@ -113,10 +114,12 @@ describe('auth integration', () => {
         email: 'test@email.com',
         password: 'pass',
       });
+    const loginBody = loginRes.body as { token: string };
     const res = await request(app.getHttpServer())
       .get('/auth/me')
-      .set('Authorization', `Bearer ${loginRes.body.token}`);
+      .set('Authorization', `Bearer ${loginBody.token}`);
+    const meBody = res.body as { email: string };
     expect(res.status).toBe(200);
-    expect(res.body.email).toBe('test@email.com');
+    expect(meBody.email).toBe('test@email.com');
   });
 })
