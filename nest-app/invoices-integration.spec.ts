@@ -74,7 +74,7 @@ describe('invoices integration', () => {
     });
     expect(inDb).not.toBeNull();
     expect(inDb?.userId).toBe(user.id);
-    expect(inDb?.amount).toBe(42n);
+    expect(inDb?.expectedAmount).toBe(42n);
     expect(inDb?.status).toBe('PENDING');
   });
 });

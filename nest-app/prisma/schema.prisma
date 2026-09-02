@@ -59,18 +59,23 @@ model LedgerEntry {
 }
 
 model Invoice {
-  id        Int           @id @default(autoincrement())
-  address   String        @unique
-  amount    BigInt
-  currency  String
-  network   String
-  status    InvoiceStatus @default(PENDING)
-  expiresAt DateTime
-  txHash    String?       @unique
-  createdAt DateTime      @default(now())
-  userId    Int
-  user      User          @relation(fields: [userId], references: [id])
+  id             Int           @id @default(autoincrement())
+  address        String        @unique
+  expectedAmount BigInt
+  paidAmount     BigInt?
+  fromAddress    String?
+  currency       String
+  network        String
+  fee            BigInt?
+  status         InvoiceStatus @default(PENDING)
+  expiresAt      DateTime
+  txHash         String?
+  logIndex       Int?
+  createdAt      DateTime      @default(now())
+  userId         Int
+  user           User          @relation(fields: [userId], references: [id])
 
+  @@unique([txHash, logIndex])
   @@index([status, expiresAt])
   @@index([userId])
 }
@@ -95,4 +100,5 @@ enum InvoiceStatus {
   PAID
   EXPIRED
   EXPIRED_PAID
+  MANUAL_REVIEW
 }

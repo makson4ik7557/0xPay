@@ -30,7 +30,7 @@ export class InvoicesService {
       data: {
         address,
         userId: userId,
-        amount: BigInt(dto.amount),
+        expectedAmount: BigInt(dto.amount),
         currency: dto.currency,
         network: dto.network,
         expiresAt,
@@ -40,7 +40,7 @@ export class InvoicesService {
     return {
       id: invoice.id,
       address: invoice.address,
-      amount: invoice.amount.toString(),
+      amount: invoice.expectedAmount.toString(),
       currency: invoice.currency,
       network: invoice.network,
       status: invoice.status,
