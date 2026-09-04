@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
+import { LedgerService } from '../ledger/ledger.service';
+import { AssetResolverService } from './asset-resolver.service';
+import { InvoiceCallbackDto } from './dto/invoice-callback.dto';
 
 // STUB: returns a valid-format EVM address (0x + 40 hex chars).
 // Replace with real HD/derivation when address generation lands.
@@ -17,6 +20,8 @@ export class InvoicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly ledger: LedgerService,
+    private readonly resolver: AssetResolverService,
   ) {}
 
   async createInvoice(dto: CreateInvoiceDto, userId: number) {
@@ -47,5 +52,8 @@ export class InvoicesService {
       expiresAt: invoice.expiresAt,
       createdAt: invoice.createdAt,
     };
+  }
+  async handleCallback(dto: InvoiceCallbackDto) {
+
   }
 }

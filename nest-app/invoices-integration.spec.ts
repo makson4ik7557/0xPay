@@ -6,6 +6,8 @@ import { execSync } from 'node:child_process';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './src/prisma/prisma.service';
 import { InvoicesService } from './src/invoices/invoices.service';
+import { LedgerService } from './src/ledger/ledger.service';
+import { AssetResolverService } from './src/invoices/asset-resolver.service';
 import { cleanDatabase } from './src/test-utils/clean-database';
 
 describe('invoices integration', () => {
@@ -27,7 +29,12 @@ describe('invoices integration', () => {
     });
     prisma = new PrismaService();
     await prisma.onModuleInit();
-    invoicesService = new InvoicesService(prisma, config);
+    invoicesService = new InvoicesService(
+      prisma,
+      config,
+      new LedgerService(prisma),
+      new AssetResolverService(),
+    );
   }, 120000);
 
   afterAll(async () => {
