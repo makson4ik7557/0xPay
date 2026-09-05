@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '../generated/client';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { OnModuleInit } from '@nestjs/common';
 import { seedSystemAccounts } from './seed-system-accounts';
@@ -17,50 +18,46 @@ export class LedgerService implements OnModuleInit {
     network: string,
     amount: string,
     userId: number,
+    tx?: Prisma.TransactionClient,
   ) {
-    const userAccount = await this.prisma.account.upsert({
-      where: {
-        userId_currency_network: {
-          userId: userId,
-          currency: currency,
-          network: network,
-        },
-      },
-      create: {
-        type: 'USER',
-        userId: userId,
-        currency: currency,
-        network: network,
-      },
+    if (tx) return this.depositCore(tx, currency, network, amount, userId);
+    return this.prisma.$transaction((client) =>
+      this.depositCore(client, currency, network, amount, userId),
+    );
+  }
+
+  private async depositCore(
+    tx: Prisma.TransactionClient,
+    currency: string,
+    network: string,
+    amount: string,
+    userId: number,
+  ) {
+    const userAccount = await tx.account.upsert({
+      where: { userId_currency_network: { userId, currency, network } },
+      create: { type: 'USER', userId, currency, network },
       update: {},
     });
-    const systemAccount = await this.prisma.account.findFirst({
-      where: {
-        type: 'SYSTEM',
-        currency: currency,
-        network: network,
-      },
+    const systemAccount = await tx.account.findFirst({
+      where: { type: 'SYSTEM', currency, network },
     });
     if (!systemAccount) throw new NotFoundException();
-
-    await this.prisma.$transaction(async (tx) => {
-      const tx1 = await tx.transaction.create({
-        data: { type: 'deposit', amount: BigInt(amount), userId },
-      });
-      await tx.ledgerEntry.create({
-        data: {
-          transactionId: tx1.id,
-          accountId: userAccount.id,
-          amount: BigInt(amount),
-        },
-      });
-      await tx.ledgerEntry.create({
-        data: {
-          transactionId: tx1.id,
-          accountId: systemAccount.id,
-          amount: -BigInt(amount),
-        },
-      });
+    const transaction = await tx.transaction.create({
+      data: { type: 'deposit', amount: BigInt(amount), userId },
+    });
+    await tx.ledgerEntry.create({
+      data: {
+        transactionId: transaction.id,
+        accountId: userAccount.id,
+        amount: BigInt(amount),
+      },
+    });
+    await tx.ledgerEntry.create({
+      data: {
+        transactionId: transaction.id,
+        accountId: systemAccount.id,
+        amount: -BigInt(amount),
+      },
     });
   }
 
