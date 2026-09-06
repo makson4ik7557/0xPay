@@ -45,7 +45,7 @@ describe('invoice expiry integration', () => {
     const invoice = await prisma.invoice.create({
       data: {
         address: '0xpast',
-        amount: 100n,
+        expectedAmount: 100n,
         currency: 'ETH',
         network: 'SEPOLIA',
         expiresAt: new Date(Date.now() - 60_000),
@@ -70,7 +70,7 @@ describe('invoice expiry integration', () => {
     const invoice = await prisma.invoice.create({
       data: {
         address: '0xfuture',
-        amount: 100n,
+        expectedAmount: 100n,
         currency: 'ETH',
         network: 'SEPOLIA',
         expiresAt: new Date(Date.now() + 60_000),

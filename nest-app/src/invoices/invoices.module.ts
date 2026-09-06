@@ -7,16 +7,23 @@ import { InvoicesService } from './invoices.service';
 import { InvoiceExpiryService } from './invoice-expiry.service';
 import { InvoiceExpiryProcessor } from './invoice-expiry.processor';
 import { WatchlistNotifier } from './watchlist.notifier';
+import { AssetResolverService } from './asset-resolver.service';
 import { PrismaModule } from '../prisma/prisma.module';
+import { LedgerModule } from '../ledger/ledger.module';
 
 @Module({
-  imports: [PrismaModule, BullModule.registerQueue({ name: 'invoice-expiry' })],
+  imports: [
+    PrismaModule,
+    LedgerModule,
+    BullModule.registerQueue({ name: 'invoice-expiry' }),
+  ],
   controllers: [InvoicesController],
   providers: [
     InvoicesService,
     InvoiceExpiryService,
     InvoiceExpiryProcessor,
     WatchlistNotifier,
+    AssetResolverService,
   ],
 })
 export class InvoicesModule implements OnModuleInit {
