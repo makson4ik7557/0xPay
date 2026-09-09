@@ -188,4 +188,29 @@ describe('invoice callback integration', () => {
       service.handleCallback(callback({ address: `0x${'c'.repeat(40)}` })),
     ).rejects.toThrow();
   });
+
+  it('DB rejects a second invoice with the same (txHash, logIndex) — idempotency backstop', async () => {
+    const user = await createPayer();
+    await createInvoice(user.id);
+    await service.handleCallback(callback());
+
+    const other = await prisma.invoice.create({
+      data: {
+        address: `0x${'d'.repeat(40)}`,
+        userId: user.id,
+        expectedAmount: 1000n,
+        currency: 'ETH',
+        network: 'SEPOLIA',
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() + 900_000),
+      },
+    });
+
+    await expect(
+      prisma.invoice.update({
+        where: { id: other.id },
+        data: { txHash: '0xtxhash', logIndex: 0 },
+      }),
+    ).rejects.toThrow();
+  });
 });
