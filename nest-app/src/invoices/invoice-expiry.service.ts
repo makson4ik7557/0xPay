@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { WatchlistNotifier } from './watchlist.notifier';
 
 @Injectable()
 export class InvoiceExpiryService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly watchlist: WatchlistNotifier,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async sweepExpired(): Promise<number> {
     const expired = await this.prisma.invoice.findMany({
       where: { status: 'PENDING', expiresAt: { lt: new Date() } },
-      select: { id: true, address: true },
+      select: { id: true },
     });
     if (expired.length === 0) return 0;
 
@@ -20,10 +16,6 @@ export class InvoiceExpiryService {
       where: { id: { in: expired.map((invoice) => invoice.id) } },
       data: { status: 'EXPIRED' },
     });
-
-    for (const invoice of expired) {
-      await this.watchlist.remove(invoice.address);
-    }
 
     return expired.length;
   }

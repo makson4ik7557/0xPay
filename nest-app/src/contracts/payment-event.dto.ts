@@ -6,10 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export const PAYMENT_EVENT_STATUSES = [
-  'PENDING',
-  'PENDING_CONFIRMED',
-] as const;
+export const PAYMENT_EVENT_STATUSES = ['PENDING', 'PENDING_CONFIRMED'] as const;
 
 export type PaymentEventStatus = (typeof PAYMENT_EVENT_STATUSES)[number];
 
