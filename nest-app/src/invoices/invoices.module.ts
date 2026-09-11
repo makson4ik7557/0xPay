@@ -6,7 +6,6 @@ import { InvoicesController } from './invoices.controller';
 import { InvoicesService } from './invoices.service';
 import { InvoiceExpiryService } from './invoice-expiry.service';
 import { InvoiceExpiryProcessor } from './invoice-expiry.processor';
-import { WatchlistNotifier } from './watchlist.notifier';
 import { AssetResolverService } from './asset-resolver.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LedgerModule } from '../ledger/ledger.module';
@@ -22,7 +21,6 @@ import { LedgerModule } from '../ledger/ledger.module';
     InvoicesService,
     InvoiceExpiryService,
     InvoiceExpiryProcessor,
-    WatchlistNotifier,
     AssetResolverService,
   ],
 })

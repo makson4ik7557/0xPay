@@ -5,13 +5,11 @@ import {
 import { execSync } from 'node:child_process';
 import { PrismaService } from './src/prisma/prisma.service';
 import { InvoiceExpiryService } from './src/invoices/invoice-expiry.service';
-import { WatchlistNotifier } from './src/invoices/watchlist.notifier';
 import { cleanDatabase } from './src/test-utils/clean-database';
 
 describe('invoice expiry integration', () => {
   let container: StartedPostgreSqlContainer;
   let prisma: PrismaService;
-  let watchlist: WatchlistNotifier;
   let service: InvoiceExpiryService;
 
   async function createUser(email = 'exp@email.com') {
@@ -27,8 +25,7 @@ describe('invoice expiry integration', () => {
     });
     prisma = new PrismaService();
     await prisma.onModuleInit();
-    watchlist = new WatchlistNotifier();
-    service = new InvoiceExpiryService(prisma, watchlist);
+    service = new InvoiceExpiryService(prisma);
   }, 120000);
 
   afterAll(async () => {
@@ -40,7 +37,7 @@ describe('invoice expiry integration', () => {
     await cleanDatabase(prisma);
   });
 
-  it('expires a PENDING invoice past expiresAt and notifies the watchlist', async () => {
+  it('expires a PENDING invoice past expiresAt', async () => {
     const user = await createUser();
     const invoice = await prisma.invoice.create({
       data: {
@@ -52,8 +49,6 @@ describe('invoice expiry integration', () => {
         userId: user.id,
       },
     });
-    const removeSpy = vi.spyOn(watchlist, 'remove');
-
     const count = await service.sweepExpired();
 
     expect(count).toBe(1);
@@ -61,8 +56,6 @@ describe('invoice expiry integration', () => {
       where: { id: invoice.id },
     });
     expect(updated?.status).toBe('EXPIRED');
-    expect(removeSpy).toHaveBeenCalledWith('0xpast');
-    removeSpy.mockRestore();
   });
 
   it('leaves a not-yet-expired PENDING invoice untouched', async () => {
@@ -77,8 +70,6 @@ describe('invoice expiry integration', () => {
         userId: user.id,
       },
     });
-    const removeSpy = vi.spyOn(watchlist, 'remove');
-
     const count = await service.sweepExpired();
 
     expect(count).toBe(0);
@@ -86,7 +77,5 @@ describe('invoice expiry integration', () => {
       where: { id: invoice.id },
     });
     expect(updated?.status).toBe('PENDING');
-    expect(removeSpy).not.toHaveBeenCalled();
-    removeSpy.mockRestore();
   });
 });
