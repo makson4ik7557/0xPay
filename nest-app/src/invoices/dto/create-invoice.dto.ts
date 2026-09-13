@@ -1,8 +1,5 @@
 import { IsIn, IsNumberString, IsString } from 'class-validator';
-import {
-  validCurrencies,
-  validNetworks,
-} from '../../assets/assets.constants';
+import { validCurrencies, validNetworks } from '../../assets/assets.constants';
 
 export class CreateInvoiceDto {
   @IsString()

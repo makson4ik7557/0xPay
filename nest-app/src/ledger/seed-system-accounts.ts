@@ -1,4 +1,4 @@
-import {PrismaService} from '../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { assetNetworks } from '../assets/assets.constants';
 
 export async function seedSystemAccounts(prisma: PrismaService) {
