@@ -2,7 +2,7 @@ import { IsIn, IsNumberString, IsString } from 'class-validator';
 import {
   validCurrencies,
   validNetworks,
-} from '../../wallets/wallets.constants';
+} from '../../assets/assets.constants';
 
 export class CreateInvoiceDto {
   @IsString()

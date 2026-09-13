@@ -1,5 +1,5 @@
 import {PrismaService} from '../prisma/prisma.service';
-import { assetNetworks } from '../wallets/wallets.constants';
+import { assetNetworks } from '../assets/assets.constants';
 
 export async function seedSystemAccounts(prisma: PrismaService) {
   for (const [currency, networks] of Object.entries(assetNetworks)) {
