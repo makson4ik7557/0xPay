@@ -77,6 +77,7 @@ export class InvoicesService {
 
     return {
       id: invoice.id,
+      eventId: invoice.eventId,
       address: invoice.address,
       amount: invoice.expectedAmount.toString(),
       currency: invoice.currency,
