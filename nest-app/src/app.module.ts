@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import Redis from 'ioredis';
@@ -26,6 +25,5 @@ import { InvoicesModule } from './invoices/invoices.module';
     InvoicesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
